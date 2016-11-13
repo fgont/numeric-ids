@@ -1,0 +1,65 @@
+And they were all amazed, insomuch that they questioned among themselves, saying, What is this? a new teaching!
+
+
+
+ID = Init + increment 
+
+ /* Generator initialization at system bootstrap */
+ Init = InitGenerator();
+
+ /* Protocol ID generation */
+  tries = MAX_TRIES;
+
+  do{
+     Init= ComputeInit(Init);
+     Var = ComputeFunction(Var);
+     ID = Init + Var;
+
+     if(SuitableId(ID))
+       return ID;
+     else
+        Init= RecoverInit(Init);
+	Var= RecoverVar(Var)
+
+     tries--;
+  }while(tries);
+
+  return(ERROR);
+
+
+
+Random:
+
+ComputeFunction= rand();
+RecoverInit= Init;
+
+RecoverVar:
+   si es random -> random
+   sino Var+1;
+
+
+-----------------------------
+
+Hashbased:
+
+ComputeInit= Hash()
+ComputeVar= Var +1;
+RecoverInit= Init
+RecoverVar= Var+1;
+
+---
+
+Random increments
+
+InitGenerator= random()
+COmputeInit= Init;
+ComputeVar= var + rand() % STEP;
+
+----
+
+
+InitGenerator=0;
+ComputeInit= Hash(IP, tries)
+
+
+------------
