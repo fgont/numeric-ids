@@ -1,0 +1,1185 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+]>
+<?xml-stylesheet type="text/xsl" href="rfc2629.xslt" ?> <!-- used by XSLT processors -->
+<!-- OPTIONS, known as processing instructions (PIs) go here. -->
+<?rfc toc="yes" ?>
+<?rfc symrefs="yes" ?>
+<?rfc strict="no" ?>
+<rfc category="info" docName="draft-gont-numeric-ids-history-04" ipr="noDerivativesTrust200902">
+
+<front>
+<title abbrev="Predictable Numeric IDs">Unfortunate History of Transient Numeric Identifiers</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+      <organization abbrev="SI6 Networks / UTN-FRH">SI6 Networks / UTN-FRH</organization>
+
+      <address>
+        <postal>
+          <street>Evaristo Carriego 2644</street>
+          <code>1706</code>
+          <city>Haedo</city>
+          <region>Provincia de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+
+        <phone>+54 11 4650 8472</phone>
+        <email>fgont@si6networks.com</email>
+        <uri>http://www.si6networks.com</uri>
+
+       </address>
+    </author>
+    <author fullname="Ivan Arce" initials="I." surname="Arce">
+      <organization abbrev="Quarkslab">Quarkslab</organization>
+
+      <address>
+<!--
+        <postal>
+          <street>Av. Cordoba 744 Piso 5 Oficina I</street>
+          <code>C1054AAT</code>
+          <city>Ciudad Autonoma de Buenos Aires</city>
+          <region>Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+
+        <phone>+54 11 4328 5164</phone>
+-->
+        <email>iarce@quarkslab.com</email>
+
+        <uri>https://www.quarkslab.com</uri>
+
+       </address>
+    </author>
+
+<date/>
+<!--
+<area>Internet</area>
+<workgroup>Dynamic Host Configuration (dhc)</workgroup>
+-->
+<!-- <area/> -->
+<!-- <workgroup/> -->
+
+    <abstract>
+    <t>
+This document performs an analysis of the security and privacy implications of different types of "numeric identifiers" used in IETF protocols, and tries to categorize them based on their interoperability requirements and the associated failure severity when such requirements are not met. It describes a number of algorithms that have been employed in real implementations to meet such requirements and analyzes their security and privacy properties. Additionally, it provides advice on possible algorithms that could be employed to satisfy the interoperability requirements of each identifier type, while minimizing the security and privacy implications, thus providing guidance to protocol designers and protocol implementers. Finally, it provides recommendations for future protocol specifications regarding the specification of the aforementioned numeric identifiers.
+    </t>
+    </abstract>
+</front>
+
+  <middle>
+  
+<section title="Introduction" anchor="intro">
+<t>
+Network protocols employ a variety of numeric identifiers for different protocol entities, ranging from DNS Transaction IDs (TxIDs) to transport protocol numbers (e.g. TCP ports) or IPv6 Interface Identifiers (IIDs). These identifiers usually have specific properties that must be satisfied such that they do not result in negative interoperability implications (e.g. uniqueness during a specified period of time), and associated failure severities when such properties are not met, ranging from soft to hard failures.
+</t>
+
+<t>For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakage that could be exploited for pervasive monitoring <xref target="RFC7528"/>. The root of these issues has been, in many cases, the poor selection of identifiers in such protocols, usually as a result of an insufficient or misleading specification. While it is generally trivial to identify an algorithm that can satisfy the interoperability requirements for a given identifier, there exists practical evidence that doing so without negatively affecting the security and/or privacy properties of the aforementioned protocols is prone to error.</t>
+
+<t><!--Over the years, most protocol implementations have been subject to a range of possible attacks as a result of employing inappropriate algorithms for generating such identifiers. -->For example, implementations have been subject to security and/or privacy issues resulting from:
+
+<list style="symbols">
+<t>Predictable TCP Initial Sequence Numbers (ISNs) (see e.g. <xref target="Morris1985"/>)</t>
+<t>Predictable ephemeral transport protocol numbers (see e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>)</t>
+<t>Predictable IPv4 or IPv6 Fragment Identifiers (see e.g. <xref target="RFC5722"/>, <xref target="RFC6274"/>, and <xref target="RFC7739"/>)</t>
+<t>Predictable IPv6 IIDs (see e.g. <xref target="RFC7721"/> and <xref target="RFC7707"/>)</t> 
+<t>Predictable DNS TxIDs</t>
+</list>
+
+
+Recent history indicate that when new protocols are standardized or new protocol implementations are produced, the security and privacy properties of the associated identifiers tend to be overlooked and inappropriate algorithms to generate identifier values are either suggested in the specification or selected by implementers. 
+</t>
+<t>This document contains a non-exhaustive timeline of vulnerability disclosures related to some sample transient numeric identifiers and other work that has led to advances in this area, with the goal of illustrating that:
+<list style="symbols">
+<t>Vulnerabilities related to how the values for some identifiers are generated and assigned have affected implementations for an extremely long period of time.</t>
+
+<t>Such vulnerabilities, even when addressed for a given protocol version, were later reintroduced in new versions or new implementations of the same protocol.</t>
+
+<t>Standardization efforts that discuss and provide advice in this area can have a positive effect on protocol specifications and protocol implementations.</t>
+</list>
+</t>
+
+<t>Other related documents (<xref target="I-D.gont-numeric-ids-generation"/> and <xref target="I-D.gont-numeric-ids-sec-considerations"/>) provide guidance in this area.</t>
+
+</section>
+
+
+<section title="Terminology" anchor="terminology">
+
+<!--
+<t>
+<list style="hanging">
+<t hangText="Failure Mode:">
+<vspace blankLines="0" />An address that does not vary over time within the same network (as defined in <xref target="I-D.ietf-6man-ipv6-address-generation-privacy"/>).</t>
+</list>
+</t>
+-->
+
+<t>
+<list style="hanging">
+<t hangText="Identifier:">
+<vspace blankLines="0" />A data object in a protocol specification that can be used to definitely distinguish a protocol object (a datagram, network interface, transport protocol endpoint, session, etc) from all other objects of the same type, in a given context. Identifiers are usually defined as a series of bits and represented using integer values. We note that different identifiers may have additional requirements or properties depending on their specific use in a protocol. We use the term "identifier" as a generic term to refer to any data object in a protocol specification that satisfies the identification property stated above.
+</t>
+
+<t hangText="Failure Severity:">
+<vspace blankLines="0" />The consequences of a failure to comply with the interoperability requirements of a given identifier. Severity considers the worst potential consequence of a failure, determined by the system damage and/or time lost to repair the failure. In this document we define two types of failure severity: "soft" and "hard".
+</t>
+
+
+<t hangText="Hard Failure:">
+<vspace blankLines="0" />A hard failure is a non-recoverable condition in which a protocol does not operate in the prescribed manner or it operates with excessive degradation of service. For example, an established TCP connection that is aborted due to an error condition constitutes, from the point of view of the transport protocol, a hard failure, since it enters a state from which normal operation cannot be recovered.
+</t>
+
+<t hangText="Soft Failure:">
+<vspace blankLines="0" />A soft failure is a recoverable condition in which a protocol does not operate in the prescribed manner but normal operation can be resumed automatically in a short period of time. For example, a simple packet-loss event that is subsequently recovered with a retransmission can be considered a soft failure.
+</t>
+</list>
+</t>
+
+
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+   NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   RFC 2119 <xref target="RFC2119"/>.</t>
+</section>
+
+<section title="Threat Model" anchor="threat-model">
+<t>Throughout this document, we assume an attacker does not have physical or logical device to the device(s) being attacked. We assume the attacker can simply send any traffic to the target devices, to e.g. sample identifiers employed by such devices.
+</t>
+</section>
+
+
+
+<section title="IPv4/IPv6 Identification" anchor="ipid">
+<t>This section presents the timeline of the Identification field both for IPv4 and for IPv6. The reason for presenting both cases in the same section is so that it becomes evident that, while the Identification value serves the same purpose in both IPv4 and IPv6, the work and research done for the IPv4 case did not affect the IPv6 specifications or implementations.</t>
+
+<t>The IPv4 Identification value is specified in <xref target="RFC0791"/>, which specifies the interoperability requirements for the Identification field: the sender must choose the Identification field to be unique for a  given source address, destination address, and protocol for the time the datagram (or any fragment of it) could be alive in the internet. It suggests that a node may keep "a table of Identifiers, one entry for each destination it has communicated with in the last maximum packet lifetime for the internet", and suggests that "since the Identifier field allows 65,536 different values, some host may be able to simply use unique identifiers independent of destination". The above may be read as a suggestion to employ per-destination or global counters for the generation of Identification values. While <xref target="RFC0791"/> does not suggest any flawed algorithm for the generation of Identification values, it misses a discussion of the security and privacy implications of employing predictable. This has resulted in virtually all IP4 implementations generating predictable fragment Identification values by means of a global counter, at least at some point during the lifetime of such implementations.
+</t>
+
+<t>
+The IPv6 Identification is specified in <xref target="RFC2460"/>. It serves the same purpose as its IPv4 counterpart, with the only difference residing in the length of the corresponding field, and that while the IPv4 Identification field is part of the base IPv4 header, in the IPv6 case it is part of the Fragment header (which may or may not be present in an IPv6 packet). <xref target="RFC2460"/> states, in Section 4.5, that the Identification must be different than that of any other fragmented packet sent recently (within the maximum likely lifetime of a packet) with the same Source Address and Destination Address. Subsequently, it notes that this requirement can be met by means of a wrap-around 32-bit counter that is incremented each time a packet must be fragmented, and that it is an implementation choice whether to use a global or a per-destination counter. Thus, the implementation of the IPv6 Identification is similar to that of the IPv4 case, with the only difference that in the IPv6 case the suggestions to use simple counters is more explicit.
+</t>
+
+
+<t>
+<list style="hanging">
+<t hangText="September 1981:">
+<vspace blankLines="0" /><xref target="RFC0791"/> specifies the interoperability requirements for IPv4 Identification value, but does not specify any requirements in the area of security and privacy.
+</t>
+
+
+<t hangText="December 1998:">
+<vspace blankLines="0" /><xref target="Sanfilippo1998a"/> finds that predictable IPv4 Identification values (generated by most popular implementations) can be leveraged to count the number of packets sent by a target node. <xref target="Sanfilippo1998b"/> explains how to leverage the same vulnerability to implement a port-scanning technique known as dumb/idle scan. A tool that implements this attack is publicly released.
+</t>
+
+<t hangText="December 1998:">
+<vspace blankLines="0" /><xref target="RFC2460"/> suggests that a global counter be used to generate the IPv6 Identification value.
+</t>
+
+<t hangText="November 1999:">
+<vspace blankLines="0" /><xref target="Sanfilippo1999"/> discusses how to leverage predictable IPv4 Identification to uncover the rules of a number of firewalls.
+</t>
+
+
+<t hangText="November 1999:">
+<vspace blankLines="0" /><xref target="Bellovin2002"/> explains how the IPv4 Identification field can be exploited to count the number of systems behind a NAT.
+</t>
+
+
+<t hangText="December 2003:">
+<vspace blankLines="0" /><xref target="Zalewski2003"/> explains a technique to perform TCP data injection attack based on predictable IPv4 identification values which requires less effort than TCP injection attacks performed with bare TCP packets.
+</t>
+
+
+<t hangText="November 2005:">
+<vspace blankLines="0" /><xref target="Silbersack2005"/> discusses shortcoming in a number of techniques to mitigate predictable IPv4 Identification values.
+</t>
+
+
+<t hangText="October 2007:">
+<vspace blankLines="0" /><xref target="Klein2007"/> describes a weakness in the pseudo random number generator (PRNG) in use for the generation of the IP Identification by a number of operating systems.
+</t> 
+
+<t hangText="June 2011:">
+<vspace blankLines="0" /><xref target="Gont2011"/> describes how to perform idle scan attacks in IPv6.
+</t> 
+
+<t hangText="November 2011:">
+<vspace blankLines="0" />Linux mitigates predictable IPv6 Identification values <xref target="RedHat2011"/> <xref target="SUSE2011"/> <xref target="Ubuntu2011"/>.
+</t>
+
+
+<t hangText="December 2011:">
+<vspace blankLines="0" /><xref target="draft-gont-6man-predictable-fragment-id-00"/> describes the security implications of predictable IPv6 Identification values, and possible mitigations. This document is published on the Standards Track, meaning to formally update <xref target="RFC2460"/>, to introduce security and privacy requirements on IPv6 Identification values.
+</t>
+
+<t hangText="May 2012:">
+<vspace blankLines="0" /><xref target="Gont2012"/> notes that some major IPv6 implementations still employ predictable IPv6 Identification values.
+</t>
+
+<!-- [fgont] Historia de RFC7739 -->
+<t hangText="March 2013:">
+<vspace blankLines="0" />The 6man WG adopts <xref target="I-D.gont-6man-predictable-fragment-id"/>, but changes the track to "BCP" (while still formally updating <xref target="RFC2460"/>), publishing the resulting document as <xref target="draft-ietf-6man-predictable-fragment-id-00"/>.
+</t>
+
+
+<t hangText="June 2013:">
+<vspace blankLines="0" />A patch that implements IPv6-based idle-scan in nmap is submitted <xref target="Morbitzer2013"/>.
+</t>
+
+<!-- [fgont] Historia de RFC7739 -->
+<t hangText="December 2014:">
+<vspace blankLines="0" />The 6man WG changes the status of the aforementioned IETF Internet Draft to "Informational" and publishes it as <xref target="draft-ietf-6man-predictable-fragment-id-02"/>. As a result, it no longer formally updates <xref target="RFC2460"/>.
+</t>
+
+<!-- [fgont] Historia de RFC7739 -->
+<t hangText="June 2015:">
+<vspace blankLines="0" /><xref target="draft-ietf-6man-predictable-fragment-id-08"/> notes that some popular host and router implementations still employ predictable IPv6 Identification values.
+</t>
+
+<!-- [fgont] Historia de RFC7739 -->
+<t hangText="February 2016:">
+<vspace blankLines="0" /><xref target="RFC7739"/> (based on <xref target="I-D.ietf-6man-predictable-fragment-id"/>) analyzes the security and privacy implications of predictable IPv6 Identification values, and provides guidance for selecting an algorithm to generate such values. However, being published on the Informational track, it does not formally update <xref target="RFC2460"/>. <!--Note: The oiginal individual submission IP, revision of <xref target="RFC2460"/> removes the suggestion from RFC2460 to employ a global counter for the generation of IPv6 Identification values, but does specify any security and privacy requirements for the IPv6 Identification value.-->
+</t>
+
+<t hangText="June 2016:">
+<vspace blankLines="0" /><xref target="I-D.ietf-6man-rfc2460bis"/>, revision of <xref target="RFC2460"/>, removes the suggestion from RFC2460 to employ a global counter for the generation of IPv6 Identification values, but does not specify any security and privacy requirements for the IPv6 Identification value.
+</t>
+
+
+
+</list>
+</t>
+</section>
+
+<section title="TCP Initial Sequence Numbers (ISNs)" anchor="tcp-isns">
+<t>
+<xref target="RFC0793"/> suggests that the choice of the ISN of a connection is not arbitrary, but aims to reduce the chances of a stale segment from being accepted by a new incarnation of a previous connection. <xref target="RFC0793"/> suggests the use of a global 32-bit ISN generator that is incremented by 1 roughly every 4 microseconds. However, as a matter of fact, protection against stale segments from a previous incarnation of the connection is enforced by preventing the creation of a new incarnation of a previous connection before 2*MSL have passed since a segment corresponding to the old incarnation was last seen (where "MSL" is the "Maximum Segment Lifetime" <xref target="RFC0793"/>). This is accomplished by the TIME-WAIT state and TCP's "quiet time" concept (see Appendix B of <xref target="RFC1323"/>). Based on the assumption that ISNs are monotonically increasing across connections, many stacks (e.g., 4.2BSD-derived) use the ISN of an incoming SYN segment to perform "heuristics" that enable the creation of a new incarnation of a connection while the previous incarnation is still in the TIME-WAIT state (see p. 945 of <xref target="Wright1994"/>). This avoids an interoperability problem that may arise when a node establishes connections to a specific TCP end-point at a high rate <xref target="Silbersack2005"/>.</t>
+
+<t>In the case of TCP, the interoperability requirements for the ISNs are probably not clearly spelled out as one would expect. Furthermore, the suggestion of employing a global counter in <xref target="RFC0793"/> leads to negative security and privacy implications.</t>
+
+<t>
+<list style="hanging">
+<t hangText="September 1981:">
+<vspace blankLines="0" /><xref target="RFC0793"/>, suggests the use of a global 32-bit ISN
+generator, whose lower bit is incremented roughly every 4 microseconds. However, such an ISN generator makes it trivial to predict the ISN that a TCP will use for new connections, thus allowing a variety of attacks against TCP.
+</t>
+
+<!--
+<t hangText="September 1981:">
+<vspace blankLines="0" /><xref target="RFC0793"/>, suggests the use of a global 32-bit ISN
+generator, whose lower bit is incremented roughly every 4 microseconds. However, such an ISN generator makes it trivial to predict the ISN that a TCP will use for new connections, thus allowing a variety of attacks against TCP.
+</t>
+-->
+
+<t hangText="February 1985:">
+<vspace blankLines="0" /><xref target="Morris1985"/> was the first to describe how to exploit predictable TCP ISNs for forging TCP connections that could then be leveraged for trust relationship exploitation.
+</t>
+
+<t hangText="April 1989:">
+<vspace blankLines="0" /><xref target="Bellovin1989"/> discussed the security implications of predictable ISNs (along with a range of other protocol-based vulnerabilities).
+</t>
+
+
+<t hangText="February 1995:">
+<vspace blankLines="0" /><xref target="Shimomura1995"/> reported a real-world exploitation of the attack described in 1985 (ten years before) in <xref target="Morris1985"/>.
+</t>
+
+
+<t hangText="May 1996:">
+<vspace blankLines="0" /><xref target="RFC1948"/> was the first IETF effort, authored by Steven Bellovin, to address predictable TCP ISNs. The same concept specified in this document for TCP ISNs was later proposed for TCP ephemeral ports <xref target="RFC6056"/>, TCP Timestamps, and eventually even IPv6 Interface Identifiers <xref target="RFC7217"/>.
+</t>
+
+
+<t hangText="March 2001:">
+<vspace blankLines="0" /><xref target="Zalewski2001"/> provides a detailed analysis of statistical weaknesses in some ISN generators, and includes a survey of the algorithms in use by popular TCP implementations.
+</t>
+
+<t hangText="May 2001:">
+<vspace blankLines="0" />Vulnerability advisories <xref target="CERT2001"/> <xref target="USCERT2001"/> are released regarding statistical weaknesses in some ISN generators, affecting popular TCP/IP implementations.
+</t>
+
+<t hangText="March 2002:">
+<vspace blankLines="0" /><xref target="Zalewski2002"/> updates and complements <xref target="Zalewski2001"/>. It concludes that "while some vendors [...] reacted promptly and tested their solutions properly, many still either ignored the issue and never evaluated their implementations, or implemented a flawed solution that apparently was not tested using a known approach" <xref target="Zalewski2002"/>. 
+</t>
+
+<t hangText="February 2012:">
+<vspace blankLines="0" /><xref target="RFC6528"/>, after 27 years of Morris' original work <xref target="Morris1985"/>, formally updates <xref target="RFC0793"/> to mitigate predictable TCP ISNs. 
+</t>
+
+<t hangText="August 2014:">
+<vspace blankLines="0" /><xref target="I-D.eddy-rfc793bis-04"/>, the upcoming revision of the core TCP protocol specification, incorporates the algorithm specified in <xref target="RFC6528"/> as the recommended algorithm for TCP ISN generation. 
+</t>
+
+</list>
+</t>
+</section>
+
+
+<section title="IPv6 Interface Identifiers (IIDs)" anchor="ipv6-iids">
+<t>IPv6 Interface Identifiers can be generated in multiple ways: SLAAC <xref target="RFC4862"/>, DHCPv6 <xref target="RFC3315"/>, and manual configuration. This section focuses on Interface Identifiers resulting from SLAAC.</t>
+
+<t>The Interface Identifier of stable (traditional) IPv6 addresses resulting from SLAAC have traditionally resulted in the underlying link-layer address being embedded in the IID. IPv6 addresses resulting from SLAAC are currently required to employ Modified EUI-64 format identifiers, which essentially embed the underlying link-layer address of the corresponding network interface. At the time, employing the underlying link-layer address for the IID was seen as a convenient way to obtain a unique address. However, recent awareness about the security and privacy implications of this approach, and thus ongoing work <xref target="I-D.ietf-6man-default-iids"/> at the IETF is in the process of addressing this problem.
+</t>
+
+<t>
+<list style="hanging">
+<t hangText="January 1997:">
+<vspace blankLines="0" /><xref target="RFC2073"/> specifies the syntax of IPv6 global addresses (referred to as "An IPv6 Provider-Based Unicast Address Format" at the time), consistent with the IPv6 addressing architecture specified in <xref target="RFC1884"/>. Hosts are recommended to "generate addresses using link-specific addresses as Interface ID such as 48 bit IEEE-802 MAC addresses".
+</t>
+
+<t hangText="July 1998:">
+<vspace blankLines="0" /><xref target="RFC2374"/> specifies "An IPv6 Aggregatable Global Unicast Address Format" (obsoleting <xref target="RFC2373"/>) changing the size of the Interface ID to 64 bits, and specifies that that IIDs must be constructed in IEEE EUI-64 format. How such identifiers are constructed becomes specified in the appropriate "IPv6 over &lt;link&gt;" specification such as "IPv6 over Ethernet".
+</t>
+
+
+
+<t hangText="January 2001:">
+<vspace blankLines="0" /><xref target="RFC3041"/> recognizes the problem of network activity correlation, and specifies temporary addresses. Temporary addresses are to be used along with stable addresses.
+</t>
+
+
+<t hangText="August 2003:">
+<vspace blankLines="0" /><xref target="RFC3587"/> obsoletes <xref target="RFC2374"/>, making the TLA/NLA structure historic. The syntax and recommendations for the traditional stable IIDs remain unchanged, though.
+</t>
+
+<t hangText="February 2006:">
+<vspace blankLines="0" /><xref target="RFC4291"/> is published as the latest "IP Version 6 Addressing Architecture", requiring the IIDs of the traditional (stable) autoconfigured addresses to employ the Modified EUI-64 format. The details of constructing such interface identifiers are defined in the appropriate "IPv6 over &lt;link&gt;" specifications.
+</t>
+
+
+<t hangText="March 2008:">
+<vspace blankLines="0" /><xref target="RFC5157"/> provides hints regarding how patterns in IPv6 addresses could be leveraged for the purpose of address scanning.
+</t>
+
+<t hangText="December 2011:">
+<vspace blankLines="0" /><xref target="draft-gont-6man-stable-privacy-addresses-00"/> notes that the traditional scheme for generating stable addresses allows for address scanning, and also does not prevent active node tracking. It also specifies an alternative algorithm meant to replace IIDs based on Modified EUI-64 format identifiers.
+</t>
+
+<t hangText="November 2012:">
+<vspace blankLines="0" />The 6man WG adopts <xref target="I-D.gont-6man-stable-privacy-addresses"/> as a working group item (as <xref target="draft-ietf-6man-stable-privacy-addresses-00"/>). However, the specified algorithm no longer formally replaces the Modified EUI-64 format identifiers.
+</t>
+
+
+<t hangText="February 2013:">
+<vspace blankLines="0" />An address-scanning tool (scan6 of <xref target="IPv6-Toolkit"/>) that leverages IPv6 address patterns is released <xref target="Gont2013"/>.
+</t>
+
+
+<t hangText="July 2013:">
+<vspace blankLines="0" /><xref target="I-D.cooper-6man-ipv6-address-generation-privacy"/> elaborates on the security and privacy implications on all known algorithms for generating IPv6 IIDs.
+</t>
+
+
+<t hangText="January 2014:">
+<vspace blankLines="0" />The 6man wg publishes <xref target="draft-ietf-6man-default-iids-00"/> ("Recommendation on Stable IPv6 Interface Identifiers"), recommending <xref target="I-D.ietf-6man-stable-privacy-addresses"/> for the generation of stable addresses.
+</t>
+
+<t hangText="April 2014:">
+<vspace blankLines="0" /><xref target="RFC7217"/> is published, specifying "A Method for Generating Semantically Opaque Interface Identifiers with IPv6 Stateless Address Autoconfiguration (SLAAC)" as an alternative to (but *not* replacement of) Modified EUI-64 format IIDs.
+</t>
+
+<t hangText="March 2016:">
+<vspace blankLines="0" /><xref target="RFC7707"/> (formerly <xref target="I-D.gont-opsec-ipv6-host-scanning"/> and later <xref target="I-D.ietf-opsec-ipv6-host-scanning"/>), about "Network Reconnaissance in IPv6 Networks", is published.
+</t>
+
+
+<t hangText="March 2016:">
+<vspace blankLines="0" /><xref target="RFC7721"/> (formerly <xref target="I-D.cooper-6man-ipv6-address-generation-privacy"/> and later <xref target="I-D.ietf-6man-ipv6-address-generation-privacy"/>), about "Security and Privacy Considerations for IPv6 Address Generation Mechanisms", is published.
+</t>
+
+<t hangText="May 2016:">
+<vspace blankLines="0" /><xref target="draft-gont-6man-non-stable-iids-00"/> is published, with the goal of specifying requirements for non-stable addresses, and updating <xref target="RFC4941"/> such that use of only temporary addresses is allowed.
+</t>
+
+<t hangText="May 2016:">
+<vspace blankLines="0" /><xref target="draft-gont-6man-address-usage-recommendations-00"/> is published, providing an analysis of how different aspects on an address (from stability to usage mode) affect their corresponding security and privacy implications, and meaning to eventually provide advice in this area.
+</t>
+
+</list>
+</t>
+</section>
+
+
+
+	<section title="IANA Considerations" anchor="iana-considerations">
+<t>There are no IANA registries within this document. The RFC-Editor can remove this section before publication of this document as an RFC.</t>
+</section>
+
+
+
+    <section title="Security Considerations">
+
+	<t>The entire document is about the security and privacy implications of transient numeric identifiers.</t>
+
+    </section>
+
+    <section title="Acknowledgements">
+
+<t>The authors would like to thank (in alphabetical order) Dave Crocker, Christian Huitema, and Joe Touch, for providing valuable comments on earlier versions of this document.</t>
+
+<t>The authors would like to thank (in alphabetical order) Steven Bellovin, Joseph Lorenzo Hall, Gre Norcie, and Martin Thomson, for providing valuable comments on <xref target="I-D.gont-predictable-numeric-ids"/>, on which this document is based.</t>
+
+<t><xref target="tcp-isns"/> of this document borrows text from <xref target="RFC7528"/>, authored by Fernando Gont and Steven Bellovin.</t>
+
+
+ <t>The authors would like to thank Diego Armando Maradona for his magic and inspiration.</t> 
+
+    </section>
+
+  </middle>
+
+  <back>
+  <references title='Normative References'>
+	<?rfc include="reference.RFC.2119" ?>
+
+<!-- TCP sequence numbers -->
+	<?rfc include="reference.RFC.0793" ?>
+	<?rfc include="reference.RFC.6528" ?> <!-- TCP SEQ randomization -->
+
+
+
+<!-- IPv4-->
+	<?rfc include="reference.RFC.0791" ?>
+	
+
+
+
+<!-- IPv6 -->
+	<?rfc include="reference.RFC.2460" ?>
+	
+
+
+<!-- Randomness requirements-->
+<?rfc include="reference.RFC.4086" ?>
+
+
+
+
+	<?rfc include="reference.RFC.5722" ?>
+	<?rfc include="reference.RFC.6151" ?>
+
+<!-- IPv6 Addresses -->
+	<?rfc include="reference.RFC.7217" ?>
+	<?rfc include="reference.RFC.3041" ?>
+	<?rfc include="reference.RFC.2073" ?>
+	<?rfc include="reference.RFC.2374" ?>
+	<?rfc include="reference.RFC.3587" ?>
+	<?rfc include="reference.RFC.1884" ?>
+	<?rfc include="reference.RFC.4291" ?>
+	<?rfc include="reference.RFC.4941" ?>
+	<?rfc include="reference.RFC.2373" ?>
+	<?rfc include="reference.RFC.4862" ?>
+	<?rfc include="reference.RFC.3315" ?>
+
+<!-- TCP ISNs -->
+
+	<?rfc include="reference.RFC.1323" ?> 
+
+  </references>
+
+  <references title='Informative References'>
+
+<!-- IPv6 Addresses -->
+	<?rfc include="reference.RFC.5157" ?>
+	<?rfc include="reference.I-D.gont-opsec-ipv6-host-scanning" ?>
+	<?rfc include="reference.I-D.ietf-opsec-ipv6-host-scanning" ?>
+	<?rfc include="reference.I-D.gont-6man-stable-privacy-addresses" ?>
+	<?rfc include="reference.I-D.ietf-6man-stable-privacy-addresses" ?>
+	<?rfc include="reference.I-D.cooper-6man-ipv6-address-generation-privacy" ?>
+	<?rfc include="reference.I-D.ietf-6man-ipv6-address-generation-privacy" ?>
+
+	<reference anchor="Gont2013" target="https://lists.si6networks.com/pipermail/ipv6hackers/2013-February/000947.html">
+		<front>
+			<title>Beta release of the SI6 Network's IPv6 Toolkit (help wanted!)</title>
+   <author fullname="Fernando Gont" initials="F." surname="Gont">
+    </author>
+
+			<date year="1995"/>
+
+		</front>
+		<seriesInfo name="Message posted to the IPv6 Hackers mailing-list" value=" Message-ID: &lt;51184548.3030105@si6networks.com&gt;"/>
+
+	</reference>
+
+
+	<reference anchor="IPv6-Toolkit" target="https://www.si6networks.com/tools/ipv6toolkit">
+		<front>
+			<title>SI6 Networks' IPv6 Toolkit</title>
+			<author>
+				<organization>SI6 Networks</organization>
+			</author>
+			<date/>
+		</front>
+	</reference>
+
+
+
+
+
+<reference anchor='draft-gont-6man-stable-privacy-addresses-00'>
+<front>
+<title>A method for Generating Stable Privacy-Enhanced Addresses with IPv6 Stateless Address Autoconfiguration (SLAAC)</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+    </author>
+
+
+<date month='December' day='15' year='2011' />
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-gont-6man-stable-privacy-addresses-00' />
+<format type='TXT'
+        target='https://tools.ietf.org/id/draft-gont-6man-stable-privacy-addresses-00.txt' />
+</reference>
+
+
+
+<reference anchor='draft-ietf-6man-stable-privacy-addresses-00'>
+<front>
+<title>A method for Generating Stable Privacy-Enhanced Addresses with IPv6 Stateless Address Autoconfiguration (SLAAC)</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+    </author>
+
+
+<date month='May' day='18' year='2012' />
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-ietf-6man-stable-privacy-addresses-00' />
+<format type='TXT'
+        target='https://tools.ietf.org/id/draft-ietf-6man-stable-privacy-addresses-00.txt' />
+</reference>
+
+
+
+
+<reference anchor='draft-gont-6man-address-usage-recommendations-00'>
+<front>
+<title>IPv6 Address Usage Recommendations</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+    </author>
+
+    <author initials="W." surname="Liu" fullname="Will Liu">
+    </author>
+
+
+<date month='May' day='27' year='2016' />
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-gont-6man-address-usage-recommendations-00' />
+<format type='TXT'
+        target='https://tools.ietf.org/id/draft-gont-6man-address-usage-recommendations-00.txt' />
+</reference>
+
+
+
+<reference anchor='draft-gont-6man-non-stable-iids-00'>
+<front>
+<title>Recommendation on Non-Stable IPv6 Interface Identifiers</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+    </author>
+
+    <author initials="W." surname="Liu" fullname="Will Liu">
+    </author>
+
+
+<date month='May' day='23' year='2016' />
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-gont-6man-non-stable-iids-00' />
+<format type='TXT'
+
+        target='https://tools.ietf.org/id/draft-gont-6man-non-stable-iids-00.txt' />
+</reference>
+
+
+
+
+
+<reference anchor='draft-ietf-6man-default-iids-00'>
+<front>
+<title>Recommendation on Stable IPv6 Interface Identifiers</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+    </author>
+
+<author initials="A." surname="Cooper" fullname="Alissa Cooper">
+  </author>
+
+	<author
+	        fullname="Dave Thaler"
+	        initials="D."
+	        surname="Thaler">
+
+	    </author>
+
+    <author initials="W." surname="Liu" fullname="Will Liu">
+    </author>
+
+
+<date month='July' day='28' year='2014' />
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-ietf-6man-default-iids-00' />
+<format type='TXT'
+        target='https://tools.ietf.org/id/draft-ietf-6man-default-iids-00.txt' />
+</reference>
+
+
+
+
+<!-- IPv4 security -->
+	<?rfc include="reference.RFC.6274" ?>
+
+
+<!-- md5 -->
+<!--
+	<?rfc include="reference.RFC.1321" ?>
+-->
+
+
+<!-- Pervasive Monitoring -->
+	<?rfc include="reference.RFC.7528" ?>
+
+<!-- TCP ISNs -->
+
+	<?rfc include="reference.RFC.1948" ?> 
+
+	<reference anchor="Wright1994">
+		<front>
+			<title>TCP/IP Illustrated, Volume 2: The Implementation</title>
+			<author initials="G.R." surname="Wright" fullname= "Gary R. Wright">
+				<organization></organization>
+			</author>
+
+			<author initials="W.R." surname="Stevens" fullname= "W. Richard Stevens">
+				<organization></organization>
+			</author>
+			<date year="Addison-Wesley, 1994"/>
+		</front>
+<!-- The usage of the date element (above) avoids an extra space
+		before the comma.
+		<seriesInfo name="Addison-Wesley" value=""/>-->
+	</reference>
+
+	<reference anchor="CPNI-TCP" target="http://www.gont.com.ar/papers/tn-03-09-security-assessment-TCP.pdf">
+		<front>
+			<title>Security Assessment of the Transmission Control Protocol (TCP)</title>
+			<author initials="F." surname="Gont" fullname= "Fernando Gont">
+				<organization></organization>
+			</author>
+			<date year="2009"/>
+		</front>
+		<seriesInfo name="" value="United Kingdom's Centre for the Protection of National Infrastructure (CPNI) Technical Report"/>
+	</reference>
+
+
+	<reference anchor="Zalewski2001" target="http://lcamtuf.coredump.cx/oldtcp/tcpseq.html">
+		<front>
+			<title>Strange Attractors and TCP/IP Sequence Number Analysis</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+
+	<reference anchor="Zalewski2002" target="http://lcamtuf.coredump.cx/newtcp/">
+		<front>
+			<title>Strange Attractors and TCP/IP Sequence Number Analysis - One Year Later</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Bellovin1989" target="https://www.cs.columbia.edu/~smb/papers/ipext.pdf">
+		<front>
+			<title>Security Problems in the TCP/IP Protocol Suite</title>
+			<author initials="S." surname="Bellovin" fullname="Bellovin">
+				<organization></organization>
+			</author>
+			<date year="Computer Communications Review, vol. 19, no. 2, pp. 32-48, 1989"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Joncheray1995">
+		<front>
+			<title>A Simple Active Attack Against TCP</title>
+			<author initials="L." surname="Joncheray" fullname="L. Joncheray">
+				<organization></organization>
+			</author>
+			<date year="Proc. Fifth Usenix UNIX Security Symposium, 1995"/>
+		</front>
+	</reference>
+
+	<reference anchor="Morris1985" target="https://pdos.csail.mit.edu/~rtm/papers/117.pdf">
+		<front>
+			<title>A Weakness in the 4.2BSD UNIX TCP/IP Software</title>
+			<author initials="R." surname="Morris" fullname="Robert Morris">
+				<organization></organization>
+			</author>
+			<date year="1985"/>
+		</front>
+		<seriesInfo name="CSTR 117," value="AT&amp;T Bell Laboratories, Murray Hill, NJ"/>
+	</reference>
+
+
+
+	<reference anchor="USCERT2001" target="http://www.kb.cert.org/vuls/id/498440">
+		<front>
+			<title>US-CERT Vulnerability Note VU#498440: Multiple TCP/IP implementations may use statistically predictable initial sequence numbers
+</title>
+			<author initials="" surname="US-CERT" fullname= "US-CERT">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+
+	<reference anchor="CERT2001" target="http://www.cert.org/advisories/CA-2001-09.html">
+		<front>
+			<title>CERT Advisory CA-2001-09: Statistical Weaknesses in TCP/IP Initial Sequence Numbers
+</title>
+			<author initials="" surname="CERT" fullname= "CERT">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Shimomura1995" target="http://www.gont.com.ar/docs/post-shimomura-usenet.txt">
+		<front>
+			<title>Technical details of the attack described by Markoff in NYT</title>
+			<author initials="T." surname="Shimomura" fullname= "Tsutomu Shimomura">
+				<organization></organization>
+			</author>
+			<date year="1995"/>
+
+		</front>
+		<seriesInfo name="Message posted in USENET's comp.security.misc newsgroup" value=" Message-ID: &lt;3g5gkl$5j1@ariel.sdsc.edu&gt;"/>
+	</reference>
+
+
+<reference anchor='I-D.eddy-rfc793bis-04'>
+<front>
+<title>Transmission Control Protocol Specification</title>
+
+<author initials='W.' surname='Eddy' fullname='Wesley Eddy'>
+    <organization />
+</author>
+
+
+<date month='August' day='25' year='2014' />
+
+<abstract><t>
+   This document specifies the Internet's Transmission Control Protocol
+   (TCP).  TCP is an important transport layer protocol in the Internet
+   stack, and has continuously evolved over decades of use and growth of
+   the Internet.  Over this time, a number of changes have been made to
+   TCP as it was specified in RFC 793, though these have only been
+   documented in a piecemeal fashion.  This document collects and brings
+   those changes together with the protocol specification from RFC 793.
+   This document obsoletes RFC 793 and several other RFCs (TODO: list
+   all actual RFCs when finished).
+
+   RFC EDITOR NOTE: If approved for publication as an RFC, this should
+   be marked additionally as "STD: 7" and replace RFC 793 in that role.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-eddy-rfc793bis-04' />
+<format type='TXT'
+        target='https://tools.ietf.org/id/draft-eddy-rfc793bis-04.txt' />
+</reference>
+
+
+<!-- Port Randomization -->
+	<?rfc include="reference.RFC.6056" ?> 
+<!-- ICMP attacks
+	<?rfc include="reference.RFC.5927" ?>
+ -->
+
+<!-- IPv6 Flow Label 
+	<?rfc include="reference.I-D.gont-6man-flowlabel-security" ?>
+	<?rfc include="reference.RFC.7098" ?>
+-->
+
+<!-- DNS -->
+	<?rfc include="reference.RFC.1035" ?> 
+
+
+<!-- Fragment ID -->
+<!--
+	<?rfc include="reference.I-D.ietf-6man-predictable-fragment-id" ?>
+-->
+	<?rfc include="reference.RFC.7739" ?>
+
+	<?rfc include="reference.RFC.4963" ?> <!-- IPv4 Reassembly Errors at High Data Rates -->
+
+	<reference anchor="Bellovin2002">
+		<front>
+			<title>A Technique for Counting NATted Hosts</title>
+			<author initials="S. M." surname="Bellovin" fullname= "Bellovin, S. M.">
+				<organization></organization>
+			</author>
+			<date year="2002"/>
+		</front>
+		<seriesInfo name="IMW'02" value="Nov. 6-8, 2002, Marseille, France"/>
+	</reference>
+
+	<reference anchor="Fyodor2004" target="http://www.insecure.org/nmap/idlescan.html">
+		<front>
+			<title>Idle scanning and related IP ID games</title>
+			<author initials="" surname="Fyodor" fullname= "Fyodor">
+				<organization></organization>
+			</author>
+			<date year="2004"/>
+		</front>
+	</reference>
+
+	<reference anchor="Sanfilippo1998a" target="http://seclists.org/bugtraq/1998/Dec/48">
+		<front>
+			<title>about the ip header id</title>
+			<author initials="S." surname="Sanfilippo" fullname="S. Sanfilippo">
+				<organization></organization>
+			</author>
+			<date/>
+		</front>
+		<seriesInfo name="Post to Bugtraq mailing-list," value="Mon Dec 14 1998" />
+	</reference>
+
+	<reference anchor="Sanfilippo1998b" target="http://www.kyuzz.org/antirez/papers/dumbscan.html">
+		<front>
+			<title>Idle scan</title>
+			<author initials="S." surname="Sanfilippo" fullname="S. Sanfilippo">
+				<organization></organization>
+			</author>
+			<date year="1998"/>
+		</front>
+		<seriesInfo name="Post to Bugtraq" value="mailing-list" />
+	</reference>
+
+	<reference anchor="Sanfilippo1999" target="http://www.kyuzz.org/antirez/papers/moreipid.html">
+		<front>
+			<title>more ip id</title>
+			<author initials="S." surname="Sanfilippo" fullname="S. Sanfilippo">
+				<organization></organization>
+			</author>
+			<date year="1999"/>
+		</front>
+		<seriesInfo name="Post to Bugtraq" value="mailing-list" />
+	</reference>
+
+
+	<reference anchor="Morbitzer2013" target="http://seclists.org/nmap-dev/2013/q2/394">
+		<front>
+			<title>[PATCH] TCP Idle Scan in IPv6</title>
+			<author initials="M." surname="Morbitzer" fullname= "Mathias Morbitzer">
+				<organization></organization>
+			</author>
+			<date year="2013"/>
+
+		</front>
+		<seriesInfo name="" value="Message posted to the nmap-dev mailing-list"/>
+	</reference>
+
+
+
+
+	<reference anchor="Silbersack2005" target="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.4542&amp;rep=rep1&amp;type=pdf">
+		<front>
+			<title>Improving TCP/IP security through randomization without sacrificing interoperability</title>
+			<author initials="M.J." surname="Silbersack" fullname="Michael James Silbersack">
+				<organization>The FreeBSD Project</organization>
+			</author>
+			<date year="2005"/>
+		</front>
+		<seriesInfo name="EuroBSDCon 2005" value="Conference"/>
+	</reference>
+
+	<reference anchor="Zalewski2003" target="http://lcamtuf.coredump.cx/ipfrag.txt">
+		<front>
+			<title>A new TCP/IP blind data injection technique?</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2003"/>
+		</front>
+	</reference>
+
+	<reference anchor="Klein2007" target="http://www.trusteer.com/files/OpenBSD_DNS_Cache_Poisoning_and_Multiple_OS_Predictable_IP_ID_Vulnerability.pdf">
+		<front>
+			<title>OpenBSD DNS Cache Poisoning and Multiple O/S Predictable IP ID Vulnerability</title>
+			<author initials="A." surname="Klein" fullname="Amit Klein">
+				<organization></organization>
+			</author>
+			<date year="2007"/>
+		</front>
+	
+	</reference>
+
+
+	<reference anchor="Gont2011">
+		<front>
+			<title>Hacking IPv6 Networks (training course)</title>
+			<author initials="F." surname="Gont" fullname="Fernando Gont">
+				<organization></organization>
+			</author>
+			<date month="June" year="2011"/>
+		</front>
+			<seriesInfo name="Hack In Paris 2011 Conference" value="Paris, France"/>	
+	</reference>
+
+
+	<reference anchor="RedHat2011" target="https://rhn.redhat.com/errata/RHSA-2011-1465.html">
+		<front>
+			<title>RedHat Security Advisory RHSA-2011:1465-1: Important: kernel security and bug fix update</title>
+			<author initials="" surname="RedHat" fullname="RedHat">
+				<organization></organization>
+			</author>
+			<date year="2011"/>
+		</front>
+<!--			<seriesInfo name="Hack In Paris 2011 Conference" value="Paris, France"/>	-->
+	</reference>
+
+
+
+	<reference anchor="Ubuntu2011" target="http://www.ubuntu.com/usn/usn-1253-1/">
+		<front>
+			<title>Ubuntu: USN-1253-1: Linux kernel vulnerabilities</title>
+			<author initials="" surname="Ubuntu" fullname="Ubuntu">
+				<organization></organization>
+			</author>
+			<date year="2011"/>
+		</front>
+<!--			<seriesInfo name="Hack In Paris 2011 Conference" value="Paris, France"/>	-->
+	</reference>
+
+
+	<reference anchor="SUSE2011" target="http://lists.opensuse.org/opensuse-security-announce/2011-12/msg00011.html">
+		<front>
+			<title>SUSE Security Announcement: Linux kernel security update (SUSE-SA:2011:046)</title>
+			<author initials="" surname="SUSE" fullname="SUSE">
+				<organization></organization>
+			</author>
+			<date year="2011"/>
+		</front>
+<!--			<seriesInfo name="Hack In Paris 2011 Conference" value="Paris, France"/>	-->
+	</reference>
+
+
+	<reference anchor="Gont2012">
+		<front>
+			<title>Recent Advances in IPv6 Security</title>
+			<author initials="F." surname="Gont" fullname="Fernando Gont">
+				<organization></organization>
+			</author>
+			<date month="May" year="2012"/>	
+		</front>
+			<seriesInfo name="BSDCan 2012 Conference" value="Ottawa, Canada. May 11-12, 2012"/>	
+	</reference>
+
+
+
+	<?rfc include="reference.I-D.gont-6man-predictable-fragment-id" ?>
+	<?rfc include="reference.I-D.ietf-6man-predictable-fragment-id" ?>
+
+
+<reference anchor='draft-ietf-6man-predictable-fragment-id-02'>
+<front>
+<title>Security Implications of Predictable Fragment Identification Values</title>
+
+<author initials='F.' surname='Gont' fullname='Fernando Gont'>
+    <organization />
+</author>
+
+
+<date month='December' day='19' year='2014' />
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-ietf-6man-predictable-fragment-id-02' />
+
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-6man-predictable-fragment-id-02.txt' />
+</reference>
+
+
+
+<reference anchor='draft-gont-6man-predictable-fragment-id-00'>
+<front>
+<title>Security Implications of Predictable Fragment Identification Values</title>
+
+<author initials='F.' surname='Gont' fullname='Fernando Gont'>
+    <organization />
+</author>
+
+
+<date month='December' day='15' year='2011' />
+
+<abstract><t>IPv6 specifies the Fragment Header, which is employed for the
+   fragmentation and reassembly mechanisms.  The Fragment Header
+   contains an "Identification" field which, together with the IPv6
+   Source Address and the IPv6 Destination Address of the packet,
+   identifies fragments that correspond to the same original datagram,
+   such that they can be reassembled together at the receiving host.
+   The only requirement for setting the "Identification" value is that
+   it must be different than that of any other fragmented packet sent
+   recently with the same Source Address and Destination Address.  Some
+   implementations simply use a global counter for setting the Fragment
+   Identification field, thus leading to predictable values.  This
+   document analyzes the security implications of predictable
+   Identification values, and updates RFC 2460 specifying additional
+   requirements for setting the Fragment Identification, such that the
+   aforementioned security implications are mitigated.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-gont-6man-predictable-fragment-id-00' />
+
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-gont-6man-predictable-fragment-id-00.txt' />
+</reference>
+
+
+
+<reference anchor='draft-ietf-6man-predictable-fragment-id-00'>
+<front>
+<title>Security Implications of Predictable Fragment Identification Values</title>
+
+<author initials='F.' surname='Gont' fullname='Fernando Gont'>
+    <organization />
+</author>
+
+
+<date month='March' day='22' year='2013' />
+
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-ietf-6man-predictable-fragment-id-00' />
+
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-6man-predictable-fragment-id-00.txt' />
+</reference>
+
+
+
+
+
+
+<reference anchor='draft-ietf-6man-predictable-fragment-id-08'>
+<front>
+<title>Security Implications of Predictable Fragment Identification Values</title>
+
+<author initials='F.' surname='Gont' fullname='Fernando Gont'>
+    <organization />
+</author>
+
+
+<date month='June' day='9' year='2015' />
+
+<abstract><t>IPv6 specifies the Fragment Header, which is employed for the
+   fragmentation and reassembly mechanisms.  The Fragment Header
+   contains an "Identification" field which, together with the IPv6
+   Source Address and the IPv6 Destination Address of a packet,
+   identifies fragments that correspond to the same original datagram,
+   such that they can be reassembled together by the receiving host.
+   The only requirement for setting the "Identification" field is that
+   the corresponding value must be different than that employed for any
+   other fragmented packet sent recently with the same Source Address
+   and Destination Address.  Some implementations use a simple global
+   counter for setting the Identification field, thus leading to
+   predictable Identification values.  This document analyzes the
+   security implications of predictable Identification values, and
+   provides implementation guidance for selecting the Identification
+   field of the Fragment Header, such that the aforementioned security
+   implications are mitigated.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-ietf-6man-predictable-fragment-id-08' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-6man-predictable-fragment-id-08.txt' />
+</reference>
+
+<!--
+<reference anchor='I-D.hinden-6man-rfc2460bis-07'>
+<front>
+<title>Internet Protocol, Version 6 (IPv6) Specification</title>
+
+<author initials='S.E.' surname='Deering' fullname='Stephen E. Deering'>
+<author initials='R.M.' surname='Hinden' fullname='Robert M. Hinden'>
+
+    <organization />
+</author>
+
+
+<date month='June' day='9' year='2015' />
+
+<abstract><t>   This document specifies version 6 of the Internet Protocol (IPv6),
+   also sometimes referred to as IP Next Generation or IPng.  It
+   obsoletes RFC2460.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-ietf-6man-rfc2460bis-02' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-6man-rfc2460bis-02.txt' />
+</reference>
+
+-->
+
+
+<!-- http://u.cs.biu.ac.il/~herzbea/security/13-03-frag.pdf -->
+
+
+<!-- IPv6 addresses -->
+
+	<?rfc include="reference.I-D.ietf-6man-default-iids" ?>
+	<?rfc include="reference.RFC.7721" ?>
+	<?rfc include="reference.RFC.7707" ?>
+
+
+<!--
+	<reference anchor="FIPS-SHS" target="http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf">
+		<front>
+			<title>Secure Hash Standard (SHS)</title>
+			<author initials="" surname="FIPS" fullname="FIPS">
+				<organization></organization>
+			</author>
+			<date month="March" year="2012"/>
+		</front>
+		<seriesInfo name="" value="Federal Information Processing Standards Publication 180-4"/>
+	</reference>
+-->
+
+
+<!-- misc -->
+	<?rfc include="reference.I-D.gont-predictable-numeric-ids" ?>
+	<?rfc include="reference.I-D.gont-numeric-ids-sec-considerations" ?>
+	<?rfc include="reference.I-D.gont-numeric-ids-generation" ?>
+
+
+	<?rfc include="reference.I-D.ietf-6man-rfc2460bis" ?>
+
+
+
+
+</references>
+
+  </back>
+</rfc>
+
