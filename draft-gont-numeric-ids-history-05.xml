@@ -243,7 +243,9 @@ The IPv6 Identification is specified in <xref target="RFC2460"/>. It serves the 
 <vspace blankLines="0" /><xref target="I-D.ietf-6man-rfc2460bis"/>, revision of <xref target="RFC2460"/>, removes the suggestion from RFC2460 to employ a global counter for the generation of IPv6 Identification values, but does not specify any security and privacy requirements for the IPv6 Identification value.
 </t>
 
-
+<t hangText="June 2017:">
+<vspace blankLines="0" /><xref target="RFC8200"/> (formerly <xref target="I-D.ietf-6man-rfc2460bis"/>) is published, formally obsoleting <xref target="RFC2460"/>. The revised specification removes suggestion to employ a global counter for the IPv6 Identification values (contained in <xref target="RFC2460"/>, and points to <xref target="RFC7739"/> for some sample algorithms to generate the IPv6 Identification values.
+</t>
 
 </list>
 </t>
@@ -480,7 +482,7 @@ generator, whose lower bit is incremented roughly every 4 microseconds. However,
 
 <!-- IPv6 -->
 	<?rfc include="reference.RFC.2460" ?>
-	
+	<?rfc include="reference.RFC.8200" ?>	
 
 
 <!-- Randomness requirements-->
