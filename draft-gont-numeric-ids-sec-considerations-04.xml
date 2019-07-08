@@ -12,7 +12,7 @@
 <title abbrev="Security Considerations for IDs">Security Considerations for Transient Numeric Identifiers Employed in Network Protocols</title>
 
     <author fullname="Fernando Gont" initials="F." surname="Gont">
-      <organization abbrev="SI6 Networks / UTN-FRH">SI6 Networks / UTN-FRH</organization>
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
 
       <address>
         <postal>
@@ -25,7 +25,7 @@
 
         <phone>+54 11 4650 8472</phone>
         <email>fgont@si6networks.com</email>
-        <uri>http://www.si6networks.com</uri>
+        <uri>https://www.si6networks.com</uri>
 
        </address>
     </author>
@@ -62,7 +62,7 @@
 
     <abstract>
     <t>
-For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakage that could be exploited for pervasive monitoring. The root of these issues has been, in many cases, the poor selection of transient identifiers in such protocols, usually as a result of an insufficient or misleading specifications. This document formally updates RFC3552, such that RFCs are required to perform a security and privacy analysis of the transient numeric identifiers they specify.
+For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakage that could be exploited for pervasive monitoring. The root of these issues has been, in many cases, the poor selection of transient numeric identifiers in such protocols, usually as a result of  insufficient or misleading specifications. This document formally updates RFC3552, such that RFCs are required to include a security and privacy analysis of the transient numeric identifiers they specify.
     </t>
     </abstract>
 </front>
@@ -71,10 +71,10 @@ For more than 30 years, a large number of implementations of the TCP/IP protocol
   
 <section title="Introduction" anchor="intro">
 <t>
-Network protocols employ a variety of transient numeric identifiers for different protocol entities, ranging from DNS Transaction IDs (TxIDs) to transport protocol numbers (e.g. TCP ports) or IPv6 Interface Identifiers (IIDs). These identifiers usually have specific properties that must be satisfied such that they do not result in negative interoperability implications (e.g. uniqueness during a specified period of time), and associated failure severities when such properties are not met.
+Network protocols employ a variety of transient numeric identifiers for different protocol entities, ranging from DNS Transaction IDs (TxIDs) to transport protocol numbers (e.g. TCP ports) or IPv6 Interface Identifiers (IIDs). These identifiers usually have specific properties that must be satisfied such that they do not result in negative interoperability implications (e.g. uniqueness during a specified period of time), and an associated failure severity when such properties not met.
 </t>
 
-<t>For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakage that could be exploited for pervasive monitoring <xref target="RFC7528"/>. The root of these issues has been, in many cases, the poor selection of identifiers in such protocols, usually as a result of an insufficient or misleading specification. While it is generally trivial to identify an algorithm that can satisfy the interoperability requirements for a given identifier, there exists practical evidence that doing so without negatively affecting the security and/or privacy properties of the aforementioned protocols is prone to error.</t>
+<t>For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakage that could be exploited for pervasive monitoring <xref target="RFC7258"/>. The root of these issues has been, in many cases, the poor selection of identifiers in such protocols, usually as a result of insufficient or misleading specifications. While it is generally trivial to identify an algorithm that can satisfy the interoperability requirements for a given identifier, there exists practical evidence <xref target="I-D.gont-numeric-ids-history"/> that doing so without negatively affecting the security and/or privacy properties of the aforementioned protocols is prone to error.</t>
 
 <t>For example, implementations have been subject to security and/or privacy issues resulting from:
 
@@ -87,7 +87,7 @@ Network protocols employ a variety of transient numeric identifiers for differen
 </list>
 
 
-Recent history indicates that when new protocols are standardized or new protocol implementations are produced, the security and privacy properties of the associated identifiers tend to be overlooked and inappropriate algorithms to generate identifier values are either suggested in the specification or selected by implementators. As a result, we believe that advice in this area is warranted.
+Recent history indicates that when new protocols are standardized or new protocol implementations are produced, the security and privacy properties of the associated identifiers tend to be overlooked and inappropriate algorithms to generate such identifiers are either suggested in the specification or selected by implementers. As a result, advice in this area is warranted.
 </t>
 </section>
 
@@ -96,7 +96,7 @@ Recent history indicates that when new protocols are standardized or new protoco
 <t>
 <list style="hanging">
 <t hangText="Identifier:">
-<vspace blankLines="0" />A data object in a protocol specification that can be used to definetely distinguish a protocol object (a datagram, network interface, transport protocol endpoint, session, etc) from all other objects of the same type, in a given context. Identifiers are usually defined as a series of bits and represented using integer values. We note that different identifiers may have additional requirements or properties depending on their specific use in a protocol. We use the term "identifier" as a generic term to refer to any data object in a protocol specification that satisfies the identification property stated above. Throughout this document we refer as "transient network identifiers" (or simply as "identifiers") to the identifiers being dynamically selected by a protocol. Our use of "identifier" excludes static values such as "Protocol Numbers" and the like.
+<vspace blankLines="0" />A data object in a protocol specification that can be used to definitely distinguish a protocol object (a datagram, network interface, transport protocol endpoint, session, etc) from all other objects of the same type, in a given context. Identifiers are usually defined as a series of bits and represented using integer values. We note that these identifiers may have additional requirements or properties depending on their specific use in a protocol. We use the term "identifier" as a generic term to refer to any data object in a protocol specification that satisfies the identification property stated above. Throughout this document we refer as "transient numeric identifiers" (or simply as "identifiers") to the identifiers being dynamically selected by a protocol. Our use of "identifier" excludes static values such as "Protocol Numbers" and the like.
 </t>
 
 <t hangText="Failure Severity:">
@@ -124,10 +124,10 @@ Recent history indicates that when new protocols are standardized or new protoco
 
 
 <section title="Issues with the Specification of Identifiers" anchor="issues">
-<t>While assessing protocol specifications and implementations regarding the use of transient numeric identifiers, we found that most of the issues discussed in this document arise as a result of one of the following:
+<t>While assessing protocol specifications and implementations regarding the use of transient numeric identifiers <xref target="I-D.gont-numeric-ids-history"/>, we found that most of the issues discussed in this document arise as a result of one of the following conditions:
 
 <list style="symbols">
-<t>Protocol specifications which under-specify the requirements for their identifiers</t>
+<t>Protocol specifications that under-specify the requirements for their identifiers</t>
 <t>Protocol specifications that over-specify their identifiers</t>
 <t>Protocol implementations that simply fail to comply with the specified requirements</t>
 </list>
@@ -135,9 +135,9 @@ Recent history indicates that when new protocols are standardized or new protoco
 
 <t>A number of protocol implementations (too many of them) simply overlook the security and privacy implications of identifiers. Examples of them are the specification of TCP port numbers in <xref target="RFC0793"/>, the specification of TCP sequence numbers in <xref target="RFC0793"/>, or the specification of the DNS TxID in <xref target="RFC1035"/>.</t>
 
-<t>On the other hand, there are a number of protocol specifications that over-specify some of their associated protocol identifiers. For example, <xref target="RFC4291"/> essentially results in link-layer addresses being embedded in the IPv6 Interface Identifiers (IIDs) when the interoperability requirement of uniqueness could be achieved in other ways that do not result in negative security and privacy implications <xref target="RFC7721"/>. Similarly, <xref target="RFC2460"/> suggests the use of a global counter for the generation of Fragment Identification values, when the interoperability properties of uniqueness per {Src IP, Dst IP} could be achieved with other algorithms that do not result in negative security and privacy implications.</t>
+<t>On the other hand, there are a number of protocol specifications that over-specify some of their associated protocol identifiers. For example, <xref target="RFC4291"/> essentially results in link-layer addresses being embedded in the IPv6 Interface Identifiers (IIDs) when the interoperability requirement of uniqueness could be achieved in other ways that do not result in negative security and privacy implications <xref target="RFC7721"/>. Similarly, <xref target="RFC2460"/> suggested the use of a global counter for the generation of Fragment Identification values, when the interoperability properties of uniqueness per {Src IP, Dst IP} could be achieved with other algorithms that do not result in negative security and privacy implications.</t>
 
-<t>Finally, there are protocol implementations that simply fail to comply with existing protocol specifications. For example, some popular operating systems (notably Microsoft Windows) still fail to implement randomization of transport protocol ephemeral ports, as specified in <xref target="RFC6056"/>.</t>
+<t>Finally, there are protocol implementations that simply fail to comply with existing protocol specifications. For example, some popular operating systems (notably Microsoft Windows) still fails to implement transport-protocol port randomization, as specified in <xref target="RFC6056"/>.</t>
 
 <t>By requiring protocol specifications to clearly specify the interoperability requirements for the transient numeric identifiers they specify, the constraints in the possible algorithms to generate them, as well as possible over-specification of such identifiers, become evident. Furthermore, requiring specifications to include a security and privacy analysis of the transient numeric identifiers they specify prevents the corresponding considerations from being overlooked at the time a protocol is specified.</t>
 
@@ -157,18 +157,18 @@ Recent history indicates that when new protocols are standardized or new protoco
 </list>
 </t>
 
-<t>Employing trivial algorithms for generating the identifiers means that any node that is able to sample the aforementioned identifier can easily predict future identifiers employed by the victim node. For example, the algorithm for Fragment Identification selection in <xref target="RFC2460"/> and the algorithm for TCP ISN selection in <xref target="RFC0793"/>.</t>
+<t>Employing trivial algorithms for generating the identifiers means that any node that is able to sample such identifiers can easily predict future identifiers employed by the victim node. For example, the algorithm for Fragment Identification selection in <xref target="RFC2460"/> and the algorithm for TCP ISN selection in <xref target="RFC0793"/> suffer from that problem.</t>
 
 <t>When one identifier is employed across contexts where such constancy is not needed, activity correlation is made made possible. For example, <xref target="RFC4291"/> essentially results in link-layer addresses being embedded in the IPv6 Interface Identifiers (IIDs) when the interoperability requirement of uniqueness could be achieved in other ways. Employing an identifier that is constant across networks allows for node tracking across networks.</t>
 
-<t>Re-using identifiers across different layers or protocols ties the security and privacy of the protocol re-using the identifier to the security and privacy properties of such identifier (over which the protocol re-using the identifier may have no control regarding its generation). Besides, when re-using an identifier across protocols from different layer, this breaks the goal of layers of isolating the properties of a layer from that of another layer. The reuse of link-layer addresses in IPv6 addresses specified in <xref target="RFC4291"/> is one example of that.
+<t>Re-using identifiers across different layers or protocols ties the security and privacy of the protocol re-using the identifier to the security and privacy properties of the original identifier (over which the protocol re-using the identifier may have no control regarding its generation). Besides, when re-using an identifier across protocols from different layers, the goal of of isolating the properties of a layer from that of another layer is broken. Re-using link-layer addresses in IPv6 addresses as specified in <xref target="RFC4291"/> is one example of that.
 </t>
 
-<t>At times, a protocol needs to convey order information (whether sequence, timing, etc.). In many cases, there is no reason for the corresponding counter or timer to be initialized to any specific value e.g. at system bootstrap. For example, an implementations that employs a counter for the Fragment Identifier <xref target="RFC2460"/> that gets initialized to zero upon system bootstrapping will leak the amount of fragmented traffic that this node has transmitted. Similarly, a node that updates a timer to zero when bootstrapping will reveal the "uptime" of the node.</t>
+<t>At times, a protocol needs to convey order information (whether sequence, timing, etc.). In many cases, there is no reason for the corresponding counter or timer to be initialized to any specific value e.g. at system bootstrap. For example, an implementations that employs a counter for the Fragment Identifier <xref target="RFC8200"/> that gets initialized to zero upon system bootstrapping will leak the number of fragmented packets that this node has transmitted. Similarly, a node that updates a timer to zero when bootstrapping will reveal the "uptime" of the node.</t>
 
-<t>When a node that implements a per-context linear function may share the increment space among different contexts (please see the "Simple Hash-Based Algorithm" in <xref target="I-D.gont-predictable-numeric-ids"/>). Sharing the same increment space allows an attacker that can sample identifiers in other context to e.g. learn how many identifiers have been generated between two sampled values. <xref target="Sanfilippo1998a"/> and <xref target="Sanfilippo1998b"/> employ shared increment spaces to leak the amount of fragmented traffic that has been transmitted by a target node.</t>
+<t>A node that implements a per-context linear function may share the increment space among different contexts (please see the "Simple Hash-Based Algorithm" in <xref target="I-D.gont-predictable-numeric-ids"/>). Sharing the same increment space allows an attacker that can sample identifiers in other context to e.g. learn how many identifiers have been generated between two sampled values. <xref target="Sanfilippo1998a"/> and <xref target="Sanfilippo1998b"/> employ shared increment spaces to leak the number of fragmented packets that has been transmitted by a target node.</t>
 
-<t>Finally, some implementations have been found to emply flawed PRNGs. See e.g.<xref target="Klein2007"/>.</t>
+<t>Finally, some implementations have been found to employ flawed PRNGs. See e.g.<xref target="Klein2007"/>.</t>
 </section>
 
 
@@ -178,7 +178,7 @@ Recent history indicates that when new protocols are standardized or new protoco
 <list style="numbers">
 <t>Clearly specify the interoperability requirements for the aforementioned identifiers.</t>
 <t>Provide a security and privacy analysis of the aforementioned identifiers.</t>
-<t>Recommend an algorithm for generating the aforementioned identifiers that mitigates security and privacy issues, such as those discussed in <xref target="I-D.gont-predictable-numeric-ids"/>.</t>
+<t>Recommend an algorithm for generating the aforementioned identifiers that mitigates security and privacy issues, such as those discussed in <xref target="I-D.gont-numeric-ids-generation"/>.</t>
 </list>
 </t>
 </section>
@@ -192,7 +192,7 @@ Recent history indicates that when new protocols are standardized or new protoco
 
     <section title="Security Considerations">
 
-	<t>The entire document is about the security and privacy implications of transient numeric identifiers, and formally updates <xref target="RFC3552"/> such that the "Security Considerations" sections of RFCs are required to perform a security and privacy analysis of the numeric identifiers they specify.</t>
+	<t>This entire document is about the security and privacy implications of transient numeric identifiers, and formally updates <xref target="RFC3552"/> such that the "Security Considerations" sections of RFCs are required to perform a security and privacy analysis of the transient numeric identifiers they specify.</t>
 
     </section>
 
@@ -219,17 +219,21 @@ Recent history indicates that when new protocols are standardized or new protoco
 
 <!-- TCP sequence numbers -->
 	<?rfc include="reference.RFC.0793" ?>
-	<?rfc include="reference.RFC.6528" ?> <!-- TCP SEQ randomization -->
+<!--	<?rfc include="reference.RFC.6528" ?> --> <!-- TCP SEQ randomization -->
 
 <!-- IPv6 -->
 	<?rfc include="reference.RFC.2460" ?>
+	<?rfc include="reference.RFC.8200" ?>
+
+<!--
 	<?rfc include="reference.RFC.4086" ?>
+-->
 
 
-
+<!--
 	<?rfc include="reference.RFC.6151" ?>
 	<?rfc include="reference.RFC.7098" ?>
-
+-->
 
 
 
@@ -265,8 +269,9 @@ Recent history indicates that when new protocols are standardized or new protoco
 
 	<?rfc include="reference.I-D.gont-predictable-numeric-ids" ?>
 
-
+<!--
 	<?rfc include="reference.RFC.1321" ?>
+-->
 
 
 <!-- IPv6 Addressing -->
@@ -274,7 +279,7 @@ Recent history indicates that when new protocols are standardized or new protoco
 	<?rfc include="reference.RFC.7721" ?>
 
 <!-- Pervasive Monitoring -->
-	<?rfc include="reference.RFC.7528" ?>
+	<?rfc include="reference.RFC.7258" ?>
 
 
 <!-- DNS -->
@@ -295,6 +300,11 @@ Recent history indicates that when new protocols are standardized or new protoco
 </reference>
 
 </references>
+
+  <references title='Informative References'>
+	<?rfc include="reference.I-D.gont-numeric-ids-history" ?>
+	<?rfc include="reference.I-D.gont-numeric-ids-generation" ?>
+ </references>
 
   </back>
 </rfc>
