@@ -73,7 +73,7 @@ This document analyzes the timeline of the specification and implementation of d
   
 <section title="Introduction" anchor="intro">
 <t>
-Networking protocols employ a variety of transient numeric identifiers for different protocol objects, ranging from DNS Transaction IDs (TxIDs) to transport protocol ephemeral port numbers or IPv6 Interface Identifiers (IIDs). These identifiers typically have specific interoperability requirements (e.g. uniqueness during a specified period of time), and an associated failure severity when such properties are not met (e.g. "soft" or "hard" failures).
+Networking protocols employ a variety of transient numeric identifiers for different protocol objects, ranging from DNS Transaction IDs (TxIDs) to transport protocol ephemeral port numbers or IPv6 Interface Identifiers (IIDs). These identifiers typically have specific interoperability requirements (e.g. uniqueness during a specified period of time), and an associated modes when such properties are not met <xref target="I-D.irtf-numeric-ids-generation"/>.
 </t>
 
 <t>For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakages that could be exploited for pervasive monitoring <xref target="RFC7258"/>. The root cause of these issues has been, in many cases, the poor selection of the aforementioned identifiers, usually as a result of insufficient or misleading specifications. While it is generally possible to identify an algorithm that can satisfy the interoperability requirements for a given numeric identifier, this document provides empirical evidence that doing so without negatively affecting the security and/or privacy properties of the aforementioned protocols is non-trivial.</t>
@@ -116,27 +116,13 @@ Recent history indicates that when new protocols are standardized and/or impleme
 <vspace blankLines="0" />A data object in a protocol specification that can be used to definitely distinguish a protocol object (a datagram, network interface, transport protocol endpoint, session, etc) from all other objects of the same type, in a given context. Transient numeric identifiers are usually defined as a series of bits, and represented using integer values. These identifiers are typically dynamically selected, as opposed to statically-assigned numeric identifiers (see e.g. <xref target="IANA-PROT"/>). We note that different identifiers may have additional requirements or properties depending on their specific use in a protocol. We use the term "transient numeric identifier" (or simply "numeric identifier" or "identifier" as short forms) as a generic term to refer to any data object in a protocol specification that satisfies the identification property stated above.
 </t>
 
-<t hangText="Failure Severity:">
-<vspace blankLines="0" />The consequences of a failure to comply with the interoperability requirements of a given identifier. Severity considers the worst potential consequence of a failure, determined by the system damage and/or time lost to repair the failure. In this document we define two types of failure severity: "soft failure" and "hard failure".
-</t>
-
-
-<t hangText="Soft Failure:">
-<vspace blankLines="0" />A soft failure is a recoverable condition in which a protocol does not operate in the prescribed manner but normal operation can be resumed automatically in a short period of time. For example, a simple packet-loss event that is subsequently recovered with a retransmission can be considered a soft failure.
-</t>
-
-
-<t hangText="Hard Failure:">
-<vspace blankLines="0" />A hard failure is a non-recoverable condition in which a protocol does not operate in the prescribed manner or it operates with excessive degradation of service. For example, an established TCP connection that is aborted due to an error condition constitutes, from the point of view of the transport protocol, a hard failure, since it enters a state from which normal operation cannot be resumed.
-</t>
 
 </list>
 </t>
 
 <t>
-   The terms "transient numeric identifier", "failure severity", "temporary address",
-   "constant IID", "stable IID", and "temporary IID" are to be
-   interpreted as specified in [RFC7721].
+   The terms "constant IID", "stable IID", and "temporary IID" are to be
+   interpreted as defined in [RFC7721].
 
 </t>
 
@@ -272,7 +258,7 @@ The IPv6 Identification is specified in <xref target="RFC2460"/>. It serves the 
 <t>
 <xref target="RFC0793"/> suggests that the choice of the ISN of a connection is not arbitrary, but aims to reduce the chances of a stale segment from being accepted by a new incarnation of a previous connection. <xref target="RFC0793"/> suggests the use of a global 32-bit ISN generator that is incremented by 1 roughly every 4 microseconds. However, as a matter of fact, protection against stale segments from a previous incarnation of the connection is enforced by preventing the creation of a new incarnation of a previous connection before 2*MSL have passed since a segment corresponding to the old incarnation was last seen (where "MSL" is the "Maximum Segment Lifetime" <xref target="RFC0793"/>). This is accomplished by the TIME-WAIT state and TCP's "quiet time" concept (see Appendix B of <xref target="RFC1323"/>). Based on the assumption that ISNs are monotonically increasing across connections, many stacks (e.g., 4.2BSD-derived) use the ISN of an incoming SYN segment to perform "heuristics" that enable the creation of a new incarnation of a connection while the previous incarnation is still in the TIME-WAIT state (see p. 945 of <xref target="Wright1994"/>). This avoids an interoperability problem that may arise when a node establishes connections to a specific TCP end-point at a high rate <xref target="Silbersack2005"/>.</t>
 
-<t>he interoperability requirements for TCP ISNs are probably not clearly spelled out as one would expect. Furthermore, the suggestion of employing a global counter in <xref target="RFC0793"/> leads to negative security and privacy implications.</t>
+<t>The interoperability requirements for TCP ISNs are probably not clearly spelled out as one would expect. Furthermore, the suggestion of employing a global counter in <xref target="RFC0793"/> leads to negative security and privacy implications.</t>
 
 <t>
 <list style="hanging">
