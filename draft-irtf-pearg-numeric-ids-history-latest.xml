@@ -542,7 +542,7 @@ generates any kind of query, and that this identifier is copied the correspondin
 
     <section title="Acknowledgements">
 
-<t>The authors would like to thank (in alphabetical order) Dave Crocker, Christian Huitema, and Joe Touch, for providing valuable comments on earlier versions of this document.</t>
+<t>The authors would like to thank (in alphabetical order) Dave Crocker, Christian Huitema, and Joe Touch, and Christopher Wood, for providing valuable comments on earlier versions of this document.</t>
 
 <t>The authors would like to thank (in alphabetical order) Steven Bellovin, Joseph Lorenzo Hall, Gre Norcie, and Martin Thomson, for providing valuable comments on <xref target="I-D.gont-predictable-numeric-ids"/>, on which this document is based.</t>
 
