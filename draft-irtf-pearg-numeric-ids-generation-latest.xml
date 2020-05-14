@@ -117,12 +117,13 @@ Recent history indicates that when new protocols are standardized or new protoco
 <t hangText="Soft Failure:">
 <vspace blankLines="0" />A soft failure is a recoverable condition in which a protocol does not operate in the prescribed manner but normal operation can be resumed automatically in a short period of time. For example, a simple packet-loss event that is subsequently recovered with a retransmission can be considered a soft failure.
 </t>
-</list>
-</t>
 
 
 <t hangText="Hard Failure:">
 <vspace blankLines="0" />A hard failure is a non-recoverable condition in which a protocol does not operate in the prescribed manner or it operates with excessive degradation of service. For example, an established TCP connection that is aborted due to an error condition constitutes, from the point of view of the transport protocol, a hard failure, since it enters a state from which normal operation cannot be resumed.
+</t>
+	
+</list>
 </t>
 
 
@@ -230,10 +231,10 @@ We note that Category #4 could be considered a generalized case of category #3, 
 
 <section title="Category #1: Uniqueness (soft failure)" anchor="cat-1-alg">
 
-<t>The requirement of uniqueness with a soft failure mode can be complied with a Pseudo-Random Number Generator (PRNG). In scenarios where ongoing use of previously selected numeric IDs is possible and desirable, an implementation may opt to select then next available identifier in the same sequence, or select another random number. <xref target="simple-randomization"/> is an implementation of the former strategy, while <xref target="simple-randomization2"/> is an implementation of the later.
+<t>The requirement of uniqueness with a soft failure mode can be complied with a Pseudo-Random Number Generator (PRNG). In scenarios where ongoing use of previously selected numeric IDs is possible and desirable, an implementation may opt to select the next available identifier in the same sequence, or select another random number. <xref target="simple-randomization"/> is an implementation of the former strategy, while <xref target="simple-randomization2"/> is an implementation of the later.
 </t>
 
-<t>We note that since the premise is that collisions of numeric identifiers of this category only leads to ft failures, in many (if not most) cases, the algorithm will not need to check the suitability of a selected identifier (i.e., check_suitable_id() would always be "true").</t>
+<t>We note that since the premise is that collisions of numeric identifiers of this category only leads to soft failures, in many (if not most) cases, the algorithm will not need to check the suitability of a selected identifier (i.e., check_suitable_id() would always be "true").</t>
 
 <section title="Simple Randomization Algorithm" anchor="simple-randomization">
 
@@ -330,7 +331,7 @@ All the variables (in this and all the algorithms discussed in this document) ar
 </section>
 
 
-<section title="Category #3: Uniqueness, stable within context (soft-failure)" anchor="cat-3-alg">
+<section title="Category #3: Uniqueness, stable within context (soft failure)" anchor="cat-3-alg">
 <t>The goal of the following algorithm is to produce identifiers that are stable for a given context (identified by &quot;CONTEXT&quot;), but that change when the aforementioned context changes. <!--For example, if the identifiers being generated must be unique for each {src IP, dst IP} set, then each possible combination of {src IP, dst IP} should have a corresponding "next_id" value. -->
 </t>
 
@@ -367,7 +368,7 @@ All the variables (in this and all the algorithms discussed in this document) ar
     <t>In the following algorithm, the function F() provides a stateless and stable per-CONTEXT numeric identifier, where CONTEXT is the concatenation of all the elements that define the given context. 
 
 <list style="hanging">
-<t>For example, if this algorithm is expected to produce IPv6 IIDs that are unique per network interface card (NIC) and SLAAC autoconfiguration prefix, the CONTEXT should be the concatenation of e.g. the interface index and the SLAAC autoconfiguration prefix (please see <xref target="RFC7217"/> for an implementation of this algorithm for generation stable IPv6 IIDs).
+<t>For example, if this algorithm is expected to produce IPv6 IIDs that are unique per network interface card (NIC) and SLAAC autoconfiguration prefix, the CONTEXT should be the concatenation of e.g. the interface index and the SLAAC autoconfiguration prefix (please see <xref target="RFC7217"/> for an implementation of this algorithm for generation of stable IPv6 IIDs).
 </t>
 </list>
 </t>
@@ -396,7 +397,7 @@ All the variables (in this and all the algorithms discussed in this document) ar
     <figure>
     <artwork>
     /* Initialization code */
-    id_inc= 1;
+    id_inc = 1;
 
 
     /* Numeric ID selection function */
@@ -407,7 +408,7 @@ All the variables (in this and all the algorithms discussed in this document) ar
          create_counter(CONTEXT);
     }
 
-    next_id= lookup_counter(CONTEXT);
+    next_id = lookup_counter(CONTEXT);
 
     do {
         if (next_id == max_id) {
@@ -609,7 +610,7 @@ The function G() should be a cryptographic hash function.  It should use the sam
 <section title="Network Activity Correlation" anchor="activity-correlation">
 <t>An identifier that is predictable or stable within a given context allows for network activity correlation within that context.</t>
 
-<t>For example, a stable IPv6 Interface Identifier allows for network activity to be correlated for the context in which that address is stable <xref target="RFC7721"/>. A stable-per-network (as in <xref target="RFC7217"/> allows for network activity correlation within a network, whereas a constant IPv6 Interface Identifier (that remains the same across networks) allows not only network activity correlation within the same network, but also across networks ("host tracking").
+<t>For example, a stable IPv6 Interface Identifier allows for network activity to be correlated for the context in which that address is stable <xref target="RFC7721"/>. A stable-per-network IPv6 Interface Identifier (as in <xref target="RFC7217"/>) allows for network activity correlation within a network, whereas a constant IPv6 Interface Identifier (that remains the same across networks) allows not only network activity correlation within the same network, but also across networks ("host tracking").
 </t>
 
 <t>Similarly, a node that generates TCP ISNs with a global counter could allow network activity correlation across networks, since the communicating nodes could infer the identity of the node based on the TCP ISNs employed for subsequent communication instances. Similarly, a node that generates predictable IPv6 Fragment Identification values could be subject to network activity correlation (see e.g. <xref target="Bellovin2002"/>).
@@ -638,7 +639,7 @@ This generic expression generates identifiers by adding a linear function to an 
 
 <figure align="center">
 <artwork align="center"><![CDATA[
-ehemeral_port = offset(Dest_IP) + linear()
+ephemeral_port = offset(Dest_IP) + linear()
 ]]></artwork>
 <postamble></postamble>
 </figure>
@@ -660,7 +661,7 @@ will leak out information about the number of fragmented packets that have been 
 </section>
 
 <section title="Exploitation of Semantics of Transient Numeric Identifiers" anchor="id-semantics"> 
-<t>Identifiers that are not semantically opaque tend to be more predictable than semantically-opaque identifiers. For example, a MAC address contains an OUI (Organizationally-Unique Identifier) which identifies the vendor that manufactured the underlying network interface card. This fact may be leveraged by an attacker meaning to "guess" MAC addresses, if he has some knowledge about the possible NIC vendor.</t>
+<t>Identifiers that are not semantically opaque tend to be more predictable than semantically-opaque identifiers. For example, a MAC address contains an OUI (Organizationally-Unique Identifier) which identifies the vendor that manufactured the underlying network interface card. This fact may be leveraged by an attacker meaning to "guess" MAC addresses and who has some knowledge about the possible NIC vendor.</t>
 <t><xref target="RFC7707"/> discusses a number of techniques to reduce the search space when performing IPv6 address-scanning attacks by leveraging the semantics of the IIDs produced by a number by traditional IID-generation algorithms that embed MAC addresses (now replaced by <xref target="RFC8064"/> with <xref target="RFC7217"/>).
 </t>
 </section>
@@ -672,13 +673,13 @@ will leak out information about the number of fragmented packets that have been 
 
 
 <section title="Cryptanalysis" anchor="crypto-analisis"> 
-<t>A number of algorithms discussed in this document (such as <xref target="simple-hash"/> and <xref target="double-hash"/> rely on crypthographically-secure hash-functions. Implementations that employ weak hash functions and keys of inappropriate size may be subject of cryptanalysis, where an attacker may be able to obtain the secret key employed for the hash algorithms, predict numeric identifiers, etc. </t>
+<t>A number of algorithms discussed in this document (such as <xref target="simple-hash"/> and <xref target="double-hash"/> rely on cryptographically-secure hash functions. Implementations that employ weak hash functions and keys of inappropriate size may be subject to cryptanalysis, where an attacker may be able to obtain the secret key employed for the hash algorithms, predict numeric identifiers, etc. </t>
 
 <t>Futhermore, an implementation that overloads the semantics of the secret key may result in more trivial cryptanalysis, possibly resulting in the leakage of the value employed for the secret key.
 <list style="hanging">
 <t hangText="NOTE:">
 <vspace blankLines="0"/>
-<xref target="IPID-DEV"/> describes a two vulnerable numeric ID generators that employ cryptographically-weak hash functions. Additionally, one of such implementations employs a 32-bits of a kernel address as the secret key for a hash function, and therefore successful cryptanalysis leaks the aforementioned kernel address, allowing for Kernel Address Space Layout Randomization (KASLR) <xref target="KASLR"/> bypass. 
+<xref target="IPID-DEV"/> describes two vulnerable numeric ID generators that employ cryptographically-weak hash functions. Additionally, one of such implementations employs a 32-bits of a kernel address as the secret key for a hash function, and therefore successful cryptanalysis leaks the aforementioned kernel address, allowing for Kernel Address Space Layout Randomization (KASLR) <xref target="KASLR"/> bypass. 
 </t>
 </list>
 
@@ -701,7 +702,7 @@ The following subsections analyze common vulnerabilities associated with the gen
 </t>
 
 
-<t>Since the only interoperability requirement for these identifiers is uniqueness (with an associate soft failure), the obvious approach to generate them is to employ a PRNG. An implementer should consult <xref target="RFC4086"/> regarding randomness requirements for security, and consult relevant documentation when employing a PRNG provided by the underlying system.
+<t>Since the only interoperability requirement for these identifiers is uniqueness (with an associated soft failure), the obvious approach to generate them is to employ a PRNG. An implementer should consult <xref target="RFC4086"/> regarding randomness requirements for security, and consult relevant documentation when employing a PRNG provided by the underlying system.
 </t>
 
 <t>
@@ -756,7 +757,7 @@ mean to obtain a random ID in the range 0-49000, where random() produces a pseuo
 
     do {
         linear(CONTEXT_2)= linear(CONTEXT_2) + increment();
-        next_id= offset(CONTEXT_1) + linear(CONTEXT_2);
+        next_id = offset(CONTEXT_1) + linear(CONTEXT_2);
 
         if(check_suitable_id(next_id))
            return next_id;
@@ -813,7 +814,7 @@ Another possible (but stateful) approach would be to simply generate a random "p
 
     <section title="Security Considerations">
 
-	<t>The entire document is about the security and privacy implications of transient numeric identifiers. <xref target="I-D.gont-numeric-ids-sec-considerations"/> formally requires protocols specifications to include an appropriate analysis of the interoperability, security, and privacy implications of the transient numeric identifiers they specify and employ, while this document analyzes possible algorithms (and their implications) that could be employed to comply with the interoperability properties of a transient numeric identifier, while mitigating the possible security and privacy implications.</t>
+	<t>The entire document is about the security and privacy implications of transient numeric identifiers. <xref target="I-D.gont-numeric-ids-sec-considerations"/> formally requires protocol specifications to include an appropriate analysis of the interoperability, security, and privacy implications of the transient numeric identifiers they specify and employ, while this document analyzes possible algorithms (and their implications) that could be employed to comply with the interoperability properties of a transient numeric identifier, while mitigating the possible security and privacy implications.</t>
 
     </section>
 
