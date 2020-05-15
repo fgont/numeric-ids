@@ -8,7 +8,7 @@
 <?rfc symrefs="yes" ?>
 <?rfc strict="no" ?>
 
-<rfc category="info" docName="draft-irtf-pearg-numeric-ids-generation-01" ipr="trust200902" submissionType="IRTF">
+<rfc category="info" docName="draft-irtf-pearg-numeric-ids-generation-latest" ipr="trust200902" submissionType="IRTF">
 
 <front>
 <title abbrev="Generation of Transient Numeric IDs">On the Generation of Transient Numeric Identifiers</title>
@@ -25,7 +25,7 @@
           <country>Argentina</country>
         </postal>
 
-        <phone>+54 11 4650 8472</phone> 
+<!--        <phone>+54 11 4650 8472</phone>  -->
         <email>fgont@si6networks.com</email>
         <uri>https://www.si6networks.com</uri>
 
@@ -820,7 +820,7 @@ Another possible (but stateful) approach would be to simply generate a random "p
 
     <section title="Acknowledgements">
 
-<t>The authors would like to thank (in alphabetical order) Steven Bellovin, Joseph Lorenzo Hall, Gre Norcie, and Martin Thomson, for providing valuable comments on earlier versions of this document.</t>
+<t>The authors would like to thank (in alphabetical order) Steven Bellovin, Joseph Lorenzo Hall, Gre Norcie, Shivan Sahib, and Martin Thomson, for providing valuable comments on earlier versions of this document.</t>
 
  <t>The authors would like to thank Diego Armando Maradona for his magic and inspiration.</t> 
     </section>
@@ -1266,7 +1266,7 @@ check_suitable_id() is a function that checks whether the resulting identifier i
 </list>
 </t>
 
-<t>For obvious reasons, this algorithm results in predicable sequences. If a global counter is used (such as "next_id" in the example above), a node that learns one numeric identifier can also learn or guess values employed by past and future protocol instances. On the other hand, when the value of increments is known (such as "1" in this case), an attacker can sample two values, and learn the number of identifiers that were generated in-between. Furthermore, if the counter is intitizalized e.g. when the system its bootsrapped to some known value, it will likely leak information (for example, the number of transmitted in the case of an IP ID generator <xref target="Sanfilippo1998a"/>, or the system uptime in the case of TCP timestamps <xref target="TCPT-uptime"/>).
+<t>For obvious reasons, this algorithm results in predicable sequences. If a global counter is used (such as "next_id" in the example above), a node that learns one numeric identifier can also learn or guess values employed by past and future protocol instances. On the other hand, when the value of increments is known (such as "1" in this case), an attacker can sample two values, and learn the number of identifiers that were generated in-between. Furthermore, if the counter is initialized e.g. when the system its bootstrapped to some known value, it will likely leak information (for example, the number of transmitted in the case of an IP ID generator <xref target="Sanfilippo1998a"/>, or the system uptime in the case of TCP timestamps <xref target="TCPT-uptime"/>).
 </t>
 
 <t>Where identifier reuse would lead to a hard failure, one typical approach to generate unique identifiers (while minimizing the security and privacy implications of predictable identifiers) is to obfuscate the resulting numeric identifiers by either:
