@@ -493,8 +493,8 @@ Internet-Draft     Generation of Transient Numeric IDs    September 2020
    of a selected identifier (i.e., check_suitable_id() would always be
    "true").
 
-   In secenarios where e.g. simultaneous use of a given numeric ID is
-   undesirable and the implementation can detect such condition, an
+   In scenarios where e.g. simultaneous use of a given numeric ID is
+   undesirable and the implementation detects such condition, an
    implementation may opt to select the next available identifier in the
    same sequence, or select another random number.  Section 7.1.1 is an
 
@@ -1181,7 +1181,7 @@ Internet-Draft     Generation of Transient Numeric IDs    September 2020
    attacker may be able to obtain the secret key employed for the hash
    algorithms, predict numeric identifiers, etc.
 
-   Futhermore, an implementation that overloads the semantics of the
+   Furthermore, an implementation that overloads the semantics of the
    secret key may result in more trivial cryptanalysis, possibly
    resulting in the leakage of the value employed for the secret key.
 

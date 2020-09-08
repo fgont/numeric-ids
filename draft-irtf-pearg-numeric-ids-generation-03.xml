@@ -240,7 +240,7 @@ We note that Category #4 could be considered a generalized case of category #3, 
 
 <t>We note that since the premise is that collisions of numeric identifiers of this category only leads to soft failures, in many (if not most) cases, the algorithm will not need to check the suitability of a selected identifier (i.e., check_suitable_id() would always be "true").</t>
 
-<t>In secenarios where e.g. simultaneous use of a given numeric ID is undesirable and the implementation can detect such condition, an implementation may opt to select the next available identifier in the same sequence, or select another random number. <xref target="simple-randomization"/> is an implementation of the former strategy, while <xref target="simple-randomization2"/> is an implementation of the later. 
+<t>In scenarios where e.g. simultaneous use of a given numeric ID is undesirable and the implementation detects such condition, an implementation may opt to select the next available identifier in the same sequence, or select another random number. <xref target="simple-randomization"/> is an implementation of the former strategy, while <xref target="simple-randomization2"/> is an implementation of the later. 
 </t>
  
 
@@ -680,7 +680,7 @@ will leak out information about the number of fragmented packets that have been 
 <section title="Cryptanalysis" anchor="crypto-analisis"> 
 <t>A number of algorithms discussed in this document (such as <xref target="simple-hash"/> and <xref target="double-hash"/> rely on cryptographically-secure hash functions. Implementations that employ weak hash functions and keys of inappropriate size may be subject to cryptanalysis, where an attacker may be able to obtain the secret key employed for the hash algorithms, predict numeric identifiers, etc. </t>
 
-<t>Futhermore, an implementation that overloads the semantics of the secret key may result in more trivial cryptanalysis, possibly resulting in the leakage of the value employed for the secret key.
+<t>Furthermore, an implementation that overloads the semantics of the secret key may result in more trivial cryptanalysis, possibly resulting in the leakage of the value employed for the secret key.
 <list style="hanging">
 <t hangText="NOTE:">
 <vspace blankLines="0"/>
