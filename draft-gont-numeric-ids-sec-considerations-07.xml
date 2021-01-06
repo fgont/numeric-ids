@@ -227,12 +227,12 @@ values to be a predictable.
 
 
 <section title="Vulnerability Assessment Requirements for Transient Numeric Identifiers" anchor="reqs">
-<t>A protocol specification that employs transient numeric identifiers SHOULD:
+<t>Protocol specifications that employ transient numeric identifiers SHOULD:
 <list style="numbers">
 
 
-<t>Clearly specify the interoperability requirements for the aforementioned identifiers (e.g., required properties such as uniqueness, along with the failure severity if such properties are not met).</t>
-<t>Provide a vulnerability analysis of the aforementioned identifiers.
+<t>Clearly specify the interoperability requirements for the aforementioned transient numeric identifiers (e.g., required properties such as uniqueness, along with the failure severity if such properties are not met).</t>
+<t>Provide a vulnerability assessment of the aforementioned identifiers.
 
 
 <list style="hanging">
@@ -241,7 +241,7 @@ values to be a predictable.
 </t>
 </list>
 </t>
-<t>Recommend an algorithm for generating the aforementioned identifiers that mitigates the vulnerabilities identified in the previous step, such as those discussed in <xref target="I-D.irtf-pearg-numeric-ids-generation"/>.</t>
+<t>Recommend an algorithm for generating the aforementioned transient numeric identifiers that mitigates the vulnerabilities identified in the previous step, such as those discussed in <xref target="I-D.irtf-pearg-numeric-ids-generation"/>.</t>
 </list>
 </t>
 
@@ -266,7 +266,7 @@ values to be a predictable.
     </section>
 
     <section title="Acknowledgements">
-<t>The authors would like to thank Bernard Aboba and Benjamin Kaduk, for providing valuable comments on earlier versions of this document.</t>
+<t>The authors would like to thank Bernard Aboba, Theo de Raadt, Russ Housley, Benjamin Kaduk, Charlie Kaufman, and Joe Touch, for providing valuable comments on earlier versions of this document.</t>
 
 <t>The authors would like to thank (in alphabetical order) Steven Bellovin, Joseph Lorenzo Hall, Gre Norcie, for providing valuable comments on <xref target="I-D.gont-predictable-numeric-ids"/> , on which the present document is based.</t>
 

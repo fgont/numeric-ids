@@ -6,7 +6,7 @@ Network Working Group                                            F. Gont
 Internet-Draft                                              SI6 Networks
 Updates: 3552 (if approved)                                      I. Arce
 Intended status: Best Current Practice                         Quarkslab
-Expires: July 2, 2021                                  December 29, 2020
+Expires: July 10, 2021                                   January 6, 2021
 
 
  Security Considerations for Transient Numeric Identifiers Employed in
@@ -39,11 +39,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on July 2, 2021.
+   This Internet-Draft will expire on July 10, 2021.
 
 Copyright Notice
 
-   Copyright (c) 2020 IETF Trust and the persons identified as the
+   Copyright (c) 2021 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 1]
+Gont & Arce               Expires July 10, 2021                 [Page 1]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    carefully, as they describe your rights and restrictions with respect
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 2]
+Gont & Arce               Expires July 10, 2021                 [Page 2]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    For example, implementations have been subject to security and/or
@@ -165,9 +165,9 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 3]
+Gont & Arce               Expires July 10, 2021                 [Page 3]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
       dynamically selected, as opposed to statically-assigned numeric
@@ -221,9 +221,9 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 4]
+Gont & Arce               Expires July 10, 2021                 [Page 4]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    o  Protocol specifications that over-specify their identifiers
@@ -277,9 +277,9 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 5]
+Gont & Arce               Expires July 10, 2021                 [Page 5]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    o  Initializing counters or timers to constant values, when such
@@ -333,23 +333,23 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 6]
+Gont & Arce               Expires July 10, 2021                 [Page 6]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
 5.  Vulnerability Assessment Requirements for Transient Numeric
     Identifiers
 
-   A protocol specification that employs transient numeric identifiers
+   Protocol specifications that employ transient numeric identifiers
    SHOULD:
 
    1.  Clearly specify the interoperability requirements for the
-       aforementioned identifiers (e.g., required properties such as
-       uniqueness, along with the failure severity if such properties
-       are not met).
+       aforementioned transient numeric identifiers (e.g., required
+       properties such as uniqueness, along with the failure severity if
+       such properties are not met).
 
-   2.  Provide a vulnerability analysis of the aforementioned
+   2.  Provide a vulnerability assessment of the aforementioned
        identifiers.
 
           Note: Section 8 and Section 9 of
@@ -359,8 +359,8 @@ Internet-Draft       Security Considerations for IDs       December 2020
           generating transient numeric identifiers.
 
    3.  Recommend an algorithm for generating the aforementioned
-       identifiers that mitigates the vulnerabilities identified in the
-       previous step, such as those discussed in
+       transient numeric identifiers that mitigates the vulnerabilities
+       identified in the previous step, such as those discussed in
        [I-D.irtf-pearg-numeric-ids-generation].
 
 6.  IANA Considerations
@@ -377,7 +377,8 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 8.  Acknowledgements
 
-   The authors would like to thank Bernard Aboba and Benjamin Kaduk, for
+   The authors would like to thank Bernard Aboba, Theo de Raadt, Russ
+   Housley, Benjamin Kaduk, Charlie Kaufman, and Joe Touch, for
    providing valuable comments on earlier versions of this document.
 
    The authors would like to thank (in alphabetical order) Steven
@@ -388,10 +389,9 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-
-Gont & Arce               Expires July 2, 2021                  [Page 7]
+Gont & Arce               Expires July 10, 2021                 [Page 7]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    The authors would like to thank Diego Armando Maradona for his magic
@@ -445,9 +445,9 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 8]
+Gont & Arce               Expires July 10, 2021                 [Page 8]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    [Klein2007]
@@ -501,9 +501,9 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                  [Page 9]
+Gont & Arce               Expires July 10, 2021                 [Page 9]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    [RFC7258]  Farrell, S. and H. Tschofenig, "Pervasive Monitoring Is an
@@ -557,9 +557,9 @@ Authors' Addresses
 
 
 
-Gont & Arce               Expires July 2, 2021                 [Page 10]
+Gont & Arce               Expires July 10, 2021                [Page 10]
 
-Internet-Draft       Security Considerations for IDs       December 2020
+Internet-Draft       Security Considerations for IDs        January 2021
 
 
    Ivan Arce
@@ -613,4 +613,4 @@ Internet-Draft       Security Considerations for IDs       December 2020
 
 
 
-Gont & Arce               Expires July 2, 2021                 [Page 11]
+Gont & Arce               Expires July 10, 2021                [Page 11]
