@@ -5,8 +5,8 @@
 Internet Research Task Force (IRTF)                              F. Gont
 Internet-Draft                                              SI6 Networks
 Intended status: Informational                                   I. Arce
-Expires: July 12, 2021                                         Quarkslab
-                                                         January 8, 2021
+Expires: July 17, 2021                                         Quarkslab
+                                                        January 13, 2021
 
 
           Unfortunate History of Transient Numeric Identifiers
@@ -37,7 +37,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on July 12, 2021.
+   This Internet-Draft will expire on July 17, 2021.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Gont & Arce               Expires July 12, 2021                 [Page 1]
+Gont & Arce               Expires July 17, 2021                 [Page 1]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -81,12 +81,14 @@ Table of Contents
 1.  Introduction
 
    Networking protocols employ a variety of transient numeric
-   identifiers for different protocol objects, ranging from DNS
-   Transaction IDs (TxIDs) to transport protocol ephemeral port numbers
-   or IPv6 Interface Identifiers (IIDs).  These identifiers typically
-   have specific interoperability requirements (e.g. uniqueness during a
+   identifiers for different protocol objects, such as IPv4 and IPv6
+   Fragment Identifiers [RFC0791] [RFC8200], IPv6 Interface Identifiers
+   (IIDs) [RFC4291], transport protocol ephemeral port numbers
+   [RFC6056], TCP Initial Sequence Numbers (ISNs) [RFC0793], and DNS
+   Transaction IDs (TxIDs) [RFC1035].  These identifiers typically have
+   specific interoperability requirements (e.g. uniqueness during a
    specified period of time), and associated failure modes when such
-   properties are not met [I-D.irtf-pearg-numeric-ids-generation].
+   requirements are not met [I-D.irtf-pearg-numeric-ids-generation].
 
    For more than 30 years, a large number of implementations of the TCP/
    IP protocol suite have been subject to a variety of attacks, with
@@ -99,34 +101,26 @@ Table of Contents
    For example, implementations have been subject to security or privacy
    issues resulting from:
 
-   o  Predictable TCP Initial Sequence Numbers (ISNs) [RFC0793]
+   o  Predictable IPv4 or IPv6 Fragment Identifiers (see e.g.
+      [Sanfilippo1998a], [RFC6274], and [RFC7739])
 
-         See e.g.  [Morris1985], [Bellovin1989], and [RFC6528].
-
-   o  Predictable transport protocol ephemeral port numbers [RFC0793]
-      [RFC0768]
-
+   o  Predictable IPv6 IIDs (see e.g.  [RFC7721], [RFC7707], and
+      [RFC7217])
 
 
 
-Gont & Arce               Expires July 12, 2021                 [Page 2]
+Gont & Arce               Expires July 17, 2021                 [Page 2]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
 
-         See e.g.  [RFC6056] and [Silbersack2005].
+   o  Predictable transport protocol ephemeral port numbers (see e.g.
+      [RFC6056] and [Silbersack2005])
 
-   o  Predictable IPv4 or IPv6 Fragment Identifiers [RFC0791] [RFC8200]
+   o  Predictable TCP Initial Sequence Numbers (ISNs) (see e.g.
+      [Morris1985], [Bellovin1989], and [RFC6528])
 
-         See e.g.  [Sanfilippo1998a], [RFC6274], and [RFC7739].
-
-   o  Predictable IPv6 IIDs [RFC4291]
-
-         See e.g.  [RFC7721], [RFC7707], and [RFC7217].
-
-   o  Predictable DNS TxIDs [RFC1035]
-
-         See e.g.  [Schuba1993] and [Klein2007].
+   o  Predictable DNS TxIDs (see e.g.  [Schuba1993] and [Klein2007])
 
    These examples indicate that when new protocols are standardized or
    implemented, the security and privacy properties of the associated
@@ -162,16 +156,19 @@ Internet-Draft           Predictable Numeric IDs            January 2021
    [I-D.gont-numeric-ids-sec-considerations]) provide guidance in this
    area, as motivated by the present document.
 
+   This document is a product of the Privacy Enhancement and Assessment
+   Research Group (PEARG) in the IRTF.
 
 
 
-Gont & Arce               Expires July 12, 2021                 [Page 3]
+
+
+
+
+Gont & Arce               Expires July 17, 2021                 [Page 3]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
-
-   This document is a product of the Privacy Enhancement and Assessment
-   Research Group (PEARG) in the IRTF.
 
 2.  Terminology
 
@@ -198,11 +195,10 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
    Throughout this document, we assume an attacker does not have
    physical or logical access to the system(s) being attacked, and
-   cannot view the contents of the packets being transferred between the
-   sender and the receiver(s) of the target protocol (if any).  However,
-   we assume the attacker can send any traffic to the target device(s),
-   to e.g. sample transient numeric identifiers employed by such
-   device(s).
+   cannot observe the packets being transferred between the sender and
+   the receiver(s) of the target protocol (if any).  However, we assume
+   the attacker can send any traffic to the target device(s), to e.g.
+   sample transient numeric identifiers employed by such device(s).
 
 4.  Issues with the Specification of Transient Numeric Identifiers
 
@@ -217,20 +213,19 @@ Internet-Draft           Predictable Numeric IDs            January 2021
    o  Protocol specifications that over-specify their transient numeric
       identifiers
 
-
-
-
-
-Gont & Arce               Expires July 12, 2021                 [Page 4]
-
-Internet-Draft           Predictable Numeric IDs            January 2021
-
-
    o  Protocol implementations that simply fail to comply with the
       specified requirements
 
    A number of protocol specifications (too many of them) have simply
    overlooked the security and privacy implications of transient numeric
+
+
+
+Gont & Arce               Expires July 17, 2021                 [Page 4]
+
+Internet-Draft           Predictable Numeric IDs            January 2021
+
+
    identifiers.  Examples of them are the specification of TCP ephemeral
    ports in [RFC0793], the specification of TCP sequence numbers in
    [RFC0793], or the specification of the DNS TxID in [RFC1035].
@@ -274,18 +269,19 @@ Internet-Draft           Predictable Numeric IDs            January 2021
    unique identifiers independent of destination".  The above has been
    interpreted numerous times as a suggestion to employ per-destination
    or global counters for the generation of Identification values.
-
-
-
-Gont & Arce               Expires July 12, 2021                 [Page 5]
-
-Internet-Draft           Predictable Numeric IDs            January 2021
-
-
    While [RFC0791] does not suggest any flawed algorithm for the
    generation of Identification values, the specification omits a
    discussion of the security and privacy implications of predictable
    Identification values.  This has resulted in many IPv4
+
+
+
+
+Gont & Arce               Expires July 17, 2021                 [Page 5]
+
+Internet-Draft           Predictable Numeric IDs            January 2021
+
+
    implementations generating predictable fragment Identification values
    by means of a global counter, at least at some point in time.
 
@@ -330,17 +326,17 @@ Internet-Draft           Predictable Numeric IDs            January 2021
       [Sanfilippo1998a] finds that predictable IPv4 Identification
       values (generated by most popular implementations) can be
       leveraged to count the number of packets sent by a target node.
-
-
-
-Gont & Arce               Expires July 12, 2021                 [Page 6]
-
-Internet-Draft           Predictable Numeric IDs            January 2021
-
-
       [Sanfilippo1998b] explains how to leverage the same vulnerability
       to implement a port-scanning technique known as dumb/idle scan.  A
       tool that implements this attack is publicly released.
+
+
+
+
+Gont & Arce               Expires July 17, 2021                 [Page 6]
+
+Internet-Draft           Predictable Numeric IDs            January 2021
+
 
    December 1998:
       [RFC2460], a revision of the IPv6 specification, is published,
@@ -386,17 +382,18 @@ Internet-Draft           Predictable Numeric IDs            January 2021
       Identification by a number of operating systems.
 
    June 2011:
+      [Gont2011] describes how to perform idle scan attacks in IPv6.
+
+   November 2011:
 
 
 
-Gont & Arce               Expires July 12, 2021                 [Page 7]
+
+Gont & Arce               Expires July 17, 2021                 [Page 7]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
 
-      [Gont2011] describes how to perform idle scan attacks in IPv6.
-
-   November 2011:
       Linux mitigates predictable IPv6 Identification values
       [RedHat2011] [SUSE2011] [Ubuntu2011].
 
@@ -442,16 +439,17 @@ Internet-Draft           Predictable Numeric IDs            January 2021
       update [RFC2460].
 
    June 2016:
+      [I-D.ietf-6man-rfc2460bis], revision of [RFC2460], removes the
+      suggestion from RFC2460 to use a counter for the generation of
 
 
 
-Gont & Arce               Expires July 12, 2021                 [Page 8]
+
+Gont & Arce               Expires July 17, 2021                 [Page 8]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
 
-      [I-D.ietf-6man-rfc2460bis], revision of [RFC2460], removes the
-      suggestion from RFC2460 to use a counter for the generation of
       IPv6 Identification values, but does not perform a vulnerability
       assessment of the generation of IPv6 Identification values.
 
@@ -499,14 +497,15 @@ Internet-Draft           Predictable Numeric IDs            January 2021
       that a TCP instance will use for new connections, thus allowing a
       variety of attacks against TCP.
 
+   February 1985:
 
 
-Gont & Arce               Expires July 12, 2021                 [Page 9]
+
+Gont & Arce               Expires July 17, 2021                 [Page 9]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
 
-   February 1985:
       [Morris1985] was the first to describe how to exploit predictable
       TCP ISNs for forging TCP connections that could then be leveraged
       for trust relationship exploitation.
@@ -557,7 +556,8 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 10]
+
+Gont & Arce               Expires July 17, 2021                [Page 10]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -613,7 +613,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 11]
+Gont & Arce               Expires July 17, 2021                [Page 11]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -658,7 +658,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
       The 6man WG adopts [I-D.gont-6man-stable-privacy-addresses] as a
       working group item (as
       [draft-ietf-6man-stable-privacy-addresses-00]).  However, the
-      document no longer formally updates [RFC4291] and therefore the
+      document no longer formally updates [RFC4291], and therefore the
       specified algorithm no longer formally replaces the Modified
       EUI-64 format identifiers.
 
@@ -669,7 +669,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 12]
+Gont & Arce               Expires July 17, 2021                [Page 12]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -721,11 +721,11 @@ Internet-Draft           Predictable Numeric IDs            January 2021
       Interface Identifiers") (formerly [I-D.ietf-6man-default-iids]),
       with requirements for stable addresses and a recommendation to
       employ [RFC7217] for the generation of stable addresses.  It
-      formally updated a large number of RFCs.
+      formally updates a large number of RFCs.
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 13]
+Gont & Arce               Expires July 17, 2021                [Page 13]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -781,7 +781,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 14]
+Gont & Arce               Expires July 17, 2021                [Page 14]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -837,7 +837,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 15]
+Gont & Arce               Expires July 17, 2021                [Page 15]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -893,7 +893,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 16]
+Gont & Arce               Expires July 17, 2021                [Page 16]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -949,7 +949,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 17]
+Gont & Arce               Expires July 17, 2021                [Page 17]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1005,7 +1005,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 18]
+Gont & Arce               Expires July 17, 2021                [Page 18]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1056,12 +1056,12 @@ Internet-Draft           Predictable Numeric IDs            January 2021
    [CERT2001]
               CERT, "CERT Advisory CA-2001-09: Statistical Weaknesses in
               TCP/IP Initial Sequence Numbers", 2001,
-              <http://www.cert.org/advisories/CA-2001-09.html>.
+              <https://resources.sei.cmu.edu/asset_files/
+              WhitePaper/2001_019_001_496192.pdf>.
 
 
 
-
-Gont & Arce               Expires July 12, 2021                [Page 19]
+Gont & Arce               Expires July 17, 2021                [Page 19]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1117,7 +1117,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 20]
+Gont & Arce               Expires July 17, 2021                [Page 20]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1173,7 +1173,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 21]
+Gont & Arce               Expires July 17, 2021                [Page 21]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1182,7 +1182,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
               Gont, F., "Beta release of the SI6 Network's IPv6 Toolkit
               (help wanted!)", Message posted to the IPv6 Hackers
               mailing-list  Message-ID:
-              <51184548.3030105@si6networks.com>, 1995,
+              <51184548.3030105@si6networks.com>, 2013,
               <https://lists.si6networks.com/pipermail/
               ipv6hackers/2013-February/000947.html>.
 
@@ -1229,7 +1229,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 22]
+Gont & Arce               Expires July 17, 2021                [Page 22]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1285,7 +1285,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 23]
+Gont & Arce               Expires July 17, 2021                [Page 23]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1341,7 +1341,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 24]
+Gont & Arce               Expires July 17, 2021                [Page 24]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1397,7 +1397,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 25]
+Gont & Arce               Expires July 17, 2021                [Page 25]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1453,7 +1453,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 26]
+Gont & Arce               Expires July 17, 2021                [Page 26]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1509,7 +1509,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 27]
+Gont & Arce               Expires July 17, 2021                [Page 27]
 
 Internet-Draft           Predictable Numeric IDs            January 2021
 
@@ -1518,7 +1518,7 @@ Internet-Draft           Predictable Numeric IDs            January 2021
               US-CERT, "US-CERT Vulnerability Note VU#498440: Multiple
               TCP/IP implementations may use statistically predictable
               initial sequence numbers", 2001,
-              <http://www.kb.cert.org/vuls/id/498440>.
+              <https://www.kb.cert.org/vuls/id/498440>.
 
    [VU-800113]
               CERT/CC, "Multiple DNS implementations vulnerable to cache
@@ -1565,4 +1565,4 @@ Authors' Addresses
 
 
 
-Gont & Arce               Expires July 12, 2021                [Page 28]
+Gont & Arce               Expires July 17, 2021                [Page 28]

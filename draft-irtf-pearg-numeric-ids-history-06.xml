@@ -73,24 +73,25 @@ This document analyzes the timeline of the specification and implementation of d
   
 <section title="Introduction" anchor="intro">
 <t>
-Networking protocols employ a variety of transient numeric identifiers for different protocol objects, ranging from DNS Transaction IDs (TxIDs) to transport protocol ephemeral port numbers or IPv6 Interface Identifiers (IIDs). These identifiers typically have specific interoperability requirements (e.g. uniqueness during a specified period of time), and associated failure modes when such properties are not met <xref target="I-D.irtf-pearg-numeric-ids-generation"/>.
+Networking protocols employ a variety of transient numeric identifiers for different protocol objects, such as IPv4 and IPv6 Fragment Identifiers <xref target="RFC0791"/> <xref target="RFC8200"/>, IPv6 Interface Identifiers (IIDs) <xref target="RFC4291"/>, transport protocol ephemeral port numbers <xref target="RFC6056"/>, TCP Initial Sequence Numbers (ISNs) <xref target="RFC0793"/>, and DNS Transaction IDs (TxIDs) <xref target="RFC1035"/>. These identifiers typically have specific interoperability requirements (e.g. uniqueness during a specified period of time), and associated failure modes when such requirements are not met <xref target="I-D.irtf-pearg-numeric-ids-generation"/>.
 </t>
 
 <t>For more than 30 years, a large number of implementations of the TCP/IP protocol suite have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakages that could be exploited for pervasive monitoring <xref target="RFC7258"/>. The root cause of these issues has been, in many cases, poor selection of transient numeric identifiers, usually as a result of insufficient or misleading specifications.</t>
 
 <t>For example, implementations have been subject to security or privacy issues resulting from:
 
-<!--
 
 <list style="symbols">
-<t>Predictable TCP Initial Sequence Numbers (ISNs) (see e.g. <xref target="Morris1985"/>, <xref target="Bellovin1989"/>, and <xref target="RFC6528"/>)</t>
-<t>Predictable transport protocol ephemeral port numbers (see e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>)</t>
 <t>Predictable IPv4 or IPv6 Fragment Identifiers (see e.g. <xref target="Sanfilippo1998a"/>, <xref target="RFC6274"/>, and <xref target="RFC7739"/>)</t>
 <t>Predictable IPv6 IIDs (see e.g. <xref target="RFC7721"/>, <xref target="RFC7707"/>, and <xref target="RFC7217"/>)</t> 
+<t>Predictable transport protocol ephemeral port numbers (see e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>)</t>
+<t>Predictable TCP Initial Sequence Numbers (ISNs) (see e.g. <xref target="Morris1985"/>, <xref target="Bellovin1989"/>, and <xref target="RFC6528"/>)</t>
 <t>Predictable DNS TxIDs (see e.g. <xref target="Schuba1993"/> and <xref target="Klein2007"/>)</t>
 </list>
--->
 
+
+
+<!--
 <list style="symbols">
 <t>Predictable TCP Initial Sequence Numbers (ISNs) <xref target="RFC0793"/>
 
@@ -100,6 +101,7 @@ Networking protocols employ a variety of transient numeric identifiers for diffe
 </t>
 
 <t>Predictable transport protocol ephemeral port numbers <xref target="RFC0793"/> <xref target="RFC0768"/>
+
 
 <list style="hanging">
 <t>
@@ -122,7 +124,7 @@ See e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>.</t>
 </list>
 </t>
 </list>
-
+-->
 
 These examples indicate that when new protocols are standardized or implemented, the security and privacy properties of the associated transient numeric identifiers tend to be overlooked, and inappropriate algorithms to generate such identifiers (i.e. that negatively affect the security or privacy properties of the protocol) are either suggested in the specification or selected by implementers. 
 </t>
@@ -172,7 +174,7 @@ These examples indicate that when new protocols are standardized or implemented,
 </section>
 
 <section title="Threat Model" anchor="threat-model">
-<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot view the contents of the packets being transferred between the sender and the receiver(s) of the target protocol (if any). However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
+<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot observe the packets being transferred between the sender and the receiver(s) of the target protocol (if any). However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
 </t>
 </section>
 
@@ -434,7 +436,7 @@ generator, whose lower bit is incremented roughly every 4 microseconds. However,
 </t>
 
 <t hangText="November 2012:">
-<vspace blankLines="0" />The 6man WG adopts <xref target="I-D.gont-6man-stable-privacy-addresses"/> as a working group item (as <xref target="draft-ietf-6man-stable-privacy-addresses-00"/>). However, the document no longer formally updates <xref target="RFC4291"/> and therefore the specified algorithm no longer formally replaces the Modified EUI-64 format identifiers.
+<vspace blankLines="0" />The 6man WG adopts <xref target="I-D.gont-6man-stable-privacy-addresses"/> as a working group item (as <xref target="draft-ietf-6man-stable-privacy-addresses-00"/>). However, the document no longer formally updates <xref target="RFC4291"/>, and therefore the specified algorithm no longer formally replaces the Modified EUI-64 format identifiers.
 </t>
 
 
@@ -474,7 +476,7 @@ generator, whose lower bit is incremented roughly every 4 microseconds. However,
 </t>
 
 <t hangText="February 2017:">
-<vspace blankLines="0" />The 6man WG publishes <xref target="RFC8064"/> ("Recommendation on Stable IPv6 Interface Identifiers") (formerly <xref target="I-D.ietf-6man-default-iids"/>), with requirements for stable addresses and a recommendation to employ <xref target="RFC7217"/> for the generation of stable addresses. It formally updated a large number of RFCs.
+<vspace blankLines="0" />The 6man WG publishes <xref target="RFC8064"/> ("Recommendation on Stable IPv6 Interface Identifiers") (formerly <xref target="I-D.ietf-6man-default-iids"/>), with requirements for stable addresses and a recommendation to employ <xref target="RFC7217"/> for the generation of stable addresses. It formally updates a large number of RFCs.
 </t>
 
 <t hangText="March 2018:">
@@ -769,7 +771,7 @@ generates any kind of query, and that this identifier is copied the correspondin
    <author fullname="Fernando Gont" initials="F." surname="Gont">
     </author>
 
-			<date year="1995"/>
+			<date year="2013"/>
 
 		</front>
 		<seriesInfo name="Message posted to the IPv6 Hackers mailing-list" value=" Message-ID: &lt;51184548.3030105@si6networks.com&gt;"/>
@@ -1209,7 +1211,7 @@ generates any kind of query, and that this identifier is copied the correspondin
 
 
 
-	<reference anchor="USCERT2001" target="http://www.kb.cert.org/vuls/id/498440">
+	<reference anchor="USCERT2001" target="https://www.kb.cert.org/vuls/id/498440">
 		<front>
 			<title>US-CERT Vulnerability Note VU#498440: Multiple TCP/IP implementations may use statistically predictable initial sequence numbers
 </title>
@@ -1220,7 +1222,7 @@ generates any kind of query, and that this identifier is copied the correspondin
 		</front>
 	</reference>
 
-	<reference anchor="CERT2001" target="http://www.cert.org/advisories/CA-2001-09.html">
+	<reference anchor="CERT2001" target="https://resources.sei.cmu.edu/asset_files/WhitePaper/2001_019_001_496192.pdf">
 		<front>
 			<title>CERT Advisory CA-2001-09: Statistical Weaknesses in TCP/IP Initial Sequence Numbers
 </title>
