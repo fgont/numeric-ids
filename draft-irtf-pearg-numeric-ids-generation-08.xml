@@ -8,7 +8,7 @@
 <?rfc symrefs="yes" ?>
 <?rfc strict="no" ?>
 
-<rfc category="info" docName="draft-irtf-pearg-numeric-ids-generation-07" ipr="trust200902" submissionType="IRTF">
+<rfc category="info" docName="draft-irtf-pearg-numeric-ids-generation-08" ipr="trust200902" submissionType="IRTF">
 
 <front>
 <title abbrev="Generation of Transient Numeric IDs">On the Generation of Transient Numeric Identifiers</title>
@@ -18,25 +18,28 @@
 
       <address>
         <postal>
-          <street>Evaristo Carriego 2644</street>
-          <code>1706</code>
-          <city>Haedo</city>
-          <region>Provincia de Buenos Aires</region>
+	  <street>Segurola y Habana 4310 7mo piso</street>	
+          <city>Ciudad Autonoma de Buenos Aires</city>
+          <region>Buenos Aires</region>
           <country>Argentina</country>
         </postal>
 
-<!--        <phone>+54 11 4650 8472</phone>  -->
+        <phone>+54 11 4650 8472</phone>
         <email>fgont@si6networks.com</email>
         <uri>https://www.si6networks.com</uri>
 
        </address>
     </author>
-
-
     <author fullname="Ivan Arce" initials="I." surname="Arce">
       <organization abbrev="Quarkslab">Quarkslab</organization>
 
       <address>
+        <postal>
+	  <street>Segurola y Habana 4310 7mo piso</street>	
+          <city>Ciudad Autonoma de Buenos Aires</city>
+          <region>Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
 
         <email>iarce@quarkslab.com</email>
 
@@ -44,7 +47,6 @@
 
        </address>
     </author>
-
 
 <date/>
 
@@ -154,9 +156,23 @@ Recent history indicates that when new protocols are standardized or new protoco
 </section>
 
 <section title="Threat Model" anchor="threat-model">
-<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot observe the packets being transferred between the sender and the receiver(s) of the target protocol (if any). However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
+<!--
+<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot necessarily observe all the packets being transferred between the sender and the receiver(s) of the
+target protocol, but may be able to observe some of them. However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
 </t>
+-->
+
+<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and that the attacker can only observe traffic explicitly directed to the attacker. For example, an attacker cannot observe traffic transferred between a sender and the receiver(s) of a target protocol, but may be able to interact with any of these entities, including by e.g. sending any traffic to them to sample transient numeric identifiers employed by the target systems when communicating with the attacker.
+</t>
+
+<t>For example, when analyzing vulnerabilities associated with TCP Initial Sequence Numbers (ISNs), we consider a attacker is unable to capture network traffic corresponding to a TCP connection between two systems. However, we consider the attacker is able to communicate with any of these hosts (e.g., establish a TCP connection with any of them), to e.g. sample the TCP ISNs employed by these systems when communicating with the attacker.</t>
+
+<t>Similarly, when considering host-tracking attacks based on IPv6 interface identifiers, we consider an attacker may learn the IPv6 address employed by a victim node if e.g. the address becomes exposed as a result of the victim node communicating with an attacker-operated server. Subsequently, an attacker may perform host-tracking by probing a set of target addresses composed by a set of target prefixes and the IPv6 interface identifier originally learned by the attacker. Alternatively, an attacker may perform host tracking if e.g. the victim node communicates with an attacker-operated server as it moves from one location to another, those exposing its configured addresses. We note that none of these scenarios requires the attacker observe traffic not explicitly directed to the attacker.
+</t>
+
+
 </section>
+
 
 <section title="Issues with the Specification of Transient Numeric Identifiers" anchor="issues">
 <t>While assessing protocol specifications regarding the use of transient numeric identifiers, we have found that most of the issues discussed in this document arise as a result of one of the following conditions:
@@ -188,7 +204,16 @@ Recent history indicates that when new protocols are standardized or new protoco
 
 
 <section title="Categorizing Transient Numeric Identifiers" anchor="categorizing">
-<t>This section includes a non-exhaustive survey of transient numeric identifiers, and proposes a number of categories that can accommodate these identifiers based on their interoperability requirements and their associated failure severity (soft or hard)</t>
+<t>This section includes a non-exhaustive survey of transient numeric identifiers, which are representative of all the possible combinations of interoperability requirements and failure severities found in popular protocols from different layers. Additionally, it proposes a number of categories that can accommodate these identifiers based on their interoperability requirements and their associated failure severity (soft or hard).
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+All other transient numeric identifiers that were analyzed as part of this effort could be accommodated into one of the existing categories from <xref target="survey-table"/>.
+</t>
+</list>
+</t>
+
 
 <!-- [fgont] Basado en el contenido de la seccion anterior, tal vez esta tabla podria contener una columna adicional que indique si el problema es "under-specification", "over-specification", o "implementation-flaw" ?  
 
@@ -249,7 +274,7 @@ We note that Category #4 could be considered a generalized case of category #3, 
 
 
 <section title="Common Algorithms for Transient Numeric Identifier Generation" anchor="common-algorithms">
-<t>The following subsections describe some sample algorithms that can be employed for generating transient numeric identifiers for each of the categories above.</t>
+<t>The following subsections describe some sample algorithms that can be employed for generating transient numeric identifiers for each of the categories above, while mitigating the vulnerabilities analyzed in <xref target="vulns"/> of this document.</t>
 
 <t>All of the variables employed in the algorithms of the following subsections are of "unsigned integer" type, except for the "retry" variable, that is of (signed) &quot;integer&quot; type.</t>
 
@@ -258,7 +283,7 @@ We note that Category #4 could be considered a generalized case of category #3, 
 
 <t>The requirement of uniqueness with a soft failure severity can be complied with a Pseudo-Random Number Generator (PRNG).</t>
 
-<t>We note that since the premise is that collisions of transient numeric identifiers of this category only leads to soft failures, in many cases, the algorithm might not need to check the suitability of a selected identifier (i.e., suitable_id() could always return "true").</t>
+<t>We note that since the premise is that collisions of transient numeric identifiers of this category only leads to soft failures, in many cases, the algorithm might not need to check the suitability of a selected identifier (i.e., the suitable_id() function, described below, could always return "true").</t>
 
 <t>In scenarios where e.g. simultaneous use of a given numeric ID is undesirable and the implementation detects such condition, an implementation may opt to select the next available identifier in the same sequence, or select another random number. <xref target="simple-randomization"/> is an implementation of the former strategy, while <xref target="simple-randomization2"/> is an implementation of the later. Typically, the algorithm in <xref target="simple-randomization2"/> results in a more uniform distribution of the generated transient numeric identifiers. However, for transient numeric identifiers where an implementation typically keeps  local state about unsuitable/used identifiers, the algorithm in <xref target="simple-randomization2"/> may require many more iterations than the algorithm in <xref target="simple-randomization"/> to generate a suitable transient numeric identifier. This will usually be affected by the current usage ratio of transient numeric identifiers (i.e., number of numeric identifiers considered suitable / total number of numeric identifiers) and other parameters. Therefore, in such cases many implementations tend to prefer the algorithm in <xref target="simple-randomization"/> over the algorithm in <xref target="simple-randomization2"/>.
 </t>
@@ -423,7 +448,7 @@ In the case of e.g. TCP ephemeral ports or TCP ISNs, a transient numeric identif
 </list>
 </t>
 
-<t>F() is a pseudorandom function (PRF). It must not computable from the outside (without knowledge of the secret key). F() must also be difficult to reverse, such that it resists attempts to obtain the secret_key, even when given samples of the output of F() and knowledge or control of the other input parameters. F() should produce an output of at least as many bits as required for the transient numeric identifier. SipHash-2-4 (128-bit key, 64-bit output) <xref target="SipHash"/> and BLAKE3 (256-bit key, arbitrary-length output) <xref target="BLAKE3"/> are two possible options for F(). Alternatively, F() could be implemented with a keyed-hash message authentication code (HMAC) <xref target="RFC2104"/>. HMAC-SHA-256 <xref target="FIPS-SHS"/> would be one possible option for such implementation alternative. Note: Use of HMAC-MD5 <xref target="RFC1321"/> is not recommended for F() <xref target="RFC6151"/>.</t>
+<t>F() is a pseudorandom function (PRF). It must not be computable from the outside (without knowledge of the secret key). F() must also be difficult to reverse, such that it resists attempts to obtain the secret_key, even when given samples of the output of F() and knowledge or control of the other input parameters. F() should produce an output of at least as many bits as required for the transient numeric identifier. SipHash-2-4 (128-bit key, 64-bit output) <xref target="SipHash"/> and BLAKE3 (256-bit key, arbitrary-length output) <xref target="BLAKE3"/> are two possible options for F(). Alternatively, F() could be implemented with a keyed-hash message authentication code (HMAC) <xref target="RFC2104"/>. HMAC-SHA-256 <xref target="FIPS-SHS"/> would be one possible option for such implementation alternative. Note: Use of HMAC-MD5 <xref target="RFC1321"/> is not recommended for F() <xref target="RFC6151"/>.</t>
 
 
 <t>The result of F() is no more secure than the secret key, and therefore 'secret_key' must be unknown to the attacker, and must be of a reasonable length. 'secret_key' must remain stable for a given CONTEXT, since otherwise the numeric identifiers generated by this algorithm would not have the desired stability properties (i.e., stable for a given CONTEXT). In most cases, 'secret_key' should be selected with a PRNG (see <xref target="RFC4086"/> for recommendations on choosing secrets) at an appropriate time, and stored in stable or volatile storage (as necessary) for future use.
@@ -482,7 +507,7 @@ In the case of e.g. TCP ephemeral ports or TCP ISNs, a transient numeric identif
     </t>
 <t>
 <list style="hanging">
-<t hangText="NOTE:">
+<t hangText="NOTES:">
 <vspace blankLines="0"/>
 increment() returns a small integer that is employed to increment the current counter value to obtain the next transient numeric identifier. This value must be much smaller than the number of possible values for the numeric IDs (i.e., "id_range"). Most implementations of this algorithm employ a constant increment of 1. Using a value other than 1 can help mitigate some information leakages (please see below), at the expense of a possible increase in the numeric ID reuse frequency.</t>
 <t>The code above makes sure that the increment employed in the algorithm (id_inc) is always smaller than the number of possible values for the numeric IDs (i.e., "max_id - min_d + 1"). However, as noted above, this value must also be much smaller than the number of possible values for the numeric IDs.</t>
@@ -857,7 +882,17 @@ id = random() % 50000;
 <postamble></postamble>
 </figure>
 
-This example implementation means to obtain a transient numeric identifier in the range 0-49000. If random() produces e.g. a pseudorandom number of 16 bits (with uniform distribution), the selected numeric ID will have a non-uniform distribution with the numbers in the range 0-15535 having double-frequency as the numbers in the range 15536-49000. This effect is reduced if the PRNG produces an output that is much longer than the length implied by the modulo operation.
+This example implementation means to obtain a transient numeric identifier in the range 0-49999. If random() produces e.g. a pseudorandom number of 16 bits (with uniform distribution), the selected transient numeric identifier will have a non-uniform distribution with the numbers in the range 0-15535 having double-frequency than the numbers in the range 15536-49999.
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+For example, both an output of 10 and output of 50010 from the random() function will result in an 'id' value of 10.
+</t>
+</list>
+
+
+This effect is reduced if the PRNG produces an output that is much longer than the length implied by the modulo operation.
 </t>
 
 
@@ -964,7 +999,7 @@ One possible implementation of mono() would be to have mono() internally employ 
 One possible implementation approach for mono() is to maintain per-context counters, initialized to random values (as the algorithm from <xref target="per-context-counter"/>). When a new identifier is to be selected, the corresponding counter is looked-up (based on the context) and incremented, to obtain a new transient numeric identifier. For example, the algorithm in <xref target="per-context-counter"/> could be such an implementation of mono().  Another possible implementation of mono() would be to have mono() internally employ a single counter (as in the algorithm from <xref target="simple-hash"/>), or map the increments for different contexts into a number of counters/buckets, such that the number of counters that need to be maintained in memory is reduced (as in the algorithm from algorithm in <xref target="double-hash"/>).
 </t>
 -->
-<t>In all cases, a monotonically increasing function is implemented by incrementing the previous value of a counter by increment() units. In the most trivial case, increment() could return the constant "1". But increment() could also be implemented to return small random integers such that the increments are unpredictable (see Appendix A of <xref target="RFC7739"/>). This represents a tradeoff between the unpredictability of the resulting transient numeric IDs and the transient numeric ID reuse frequency.
+<t>In all cases, a monotonically increasing function is implemented by incrementing the previous value of a counter by increment() units. In the most trivial case, increment() could return the constant "1". But increment() could also be implemented to return small random integers such that the increments are unpredictable (see Appendix A of <xref target="RFC7739"/>). This represents a trade-off between the unpredictability of the resulting transient numeric IDs and the transient numeric ID reuse frequency.
 </t>
 </list>
 </t>
@@ -1003,7 +1038,7 @@ One possible implementation approach for mono() is to maintain per-context count
 
     <section title="Acknowledgements">
 
-<t>The authors would like to thank (in alphabetical order) Bernard Aboba, Jean-Philippe Aumasson, Steven Bellovin, Luis Leon Cardenas Graide, Guillermo Gont, Joseph Lorenzo Hall, Gre Norcie, Shivan Sahib, Rich Salz, Martin Thomson, and Michael Tuexen, for providing valuable comments on earlier versions of this document.</t>
+<t>The authors would like to thank (in alphabetical order) Bernard Aboba, Jean-Philippe Aumasson, Steven Bellovin, Luis Leon Cardenas Graide, Guillermo Gont, Joseph Lorenzo Hall, Gre Norcie, Colin Perkins, Vincent Roca, Shivan Sahib, Rich Salz, Martin Thomson, and Michael Tuexen, for providing valuable comments on earlier versions of this document.</t>
 
 <t>The authors would like to thank Shivan Sahib and Christopher Wood, for their guidance during the publication process of this document.</t>
 
@@ -1070,6 +1105,39 @@ One possible implementation approach for mono() is to maintain per-context count
   </references>
 
   <references title='Informative References'>
+
+<!-- Timing attacks -->
+
+	<reference anchor="Mayer2014" target="https://www.blackhat.com/docs/us-14/materials/us-14-Mayer-Time-Trial-Racing-Towards-Practical-Timing-Attacks-WP.pdf">
+		<front>
+			<title>Time Trial: Racing Towards Practical Remote Timing Attacks</title>
+			<author initials="D." surname="Mayer" fullname="Daniel Mayer">
+				<organization>Matasano</organization>
+			</author>
+			<author initials="J." surname="Sandin" fullname="Joel Sandin">
+				<organization>Matasano</organization>
+			</author>
+			<date year="2014"/>
+		</front>
+		<seriesInfo name="BlackHat USA 2014 Conference," value="August 6-7"/>
+	</reference>
+	
+	<reference anchor="Crosby2009" target="https://www.cs.rice.edu/~dwallach/pub/crosby-timing2009.pdf">
+		<front>
+			<title>Opportunities and Limits of Remote Timing Attacks</title>
+			<author initials="S. A." surname="Crosby" fullname="Scott A. Crosby">
+				<organization>Rice University</organization>
+			</author>
+			<author initials="D. S." surname="Wallach" fullname="Dan S. Wallach">
+				<organization>Rice University</organization>
+			</author>
+			<author initials="R. H." surname="Riedi" fullname="Rudolf H. Riedi">
+				<organization>Rice University</organization>
+			</author>
+			<date year="2009"/>
+		</front>
+		<seriesInfo name="ACM Trans. Inf. Syst. Secur. 12, 3, " value="Article 17 "/>
+	</reference>	
 
 
 	<reference anchor="KASLR" target="https://pax.grsecurity.net/docs/aslr.txt">
