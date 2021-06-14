@@ -34,17 +34,13 @@
       <organization abbrev="Quarkslab">Quarkslab</organization>
 
       <address>
-<!--
         <postal>
-          <street>Av. Cordoba 744 Piso 5 Oficina I</street>
-          <code>C1054AAT</code>
+	  <street>Segurola y Habana 4310 7mo piso</street>	
           <city>Ciudad Autonoma de Buenos Aires</city>
           <region>Buenos Aires</region>
           <country>Argentina</country>
         </postal>
 
-        <phone>+54 11 4328 5164</phone>
--->
         <email>iarce@quarkslab.com</email>
 
         <uri>https://www.quarkslab.com</uri>
@@ -86,7 +82,7 @@ Networking protocols employ a variety of transient numeric identifiers for diffe
 <t>Predictable IPv6 IIDs (see e.g. <xref target="RFC7721"/>, <xref target="RFC7707"/>, and <xref target="RFC7217"/>)</t> 
 <t>Predictable transport protocol ephemeral port numbers (see e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>)</t>
 <t>Predictable TCP Initial Sequence Numbers (ISNs) (see e.g. <xref target="Morris1985"/>, <xref target="Bellovin1989"/>, and <xref target="RFC6528"/>)</t>
-<t>Predictable DNS TxIDs (see e.g. <xref target="Schuba1993"/> and <xref target="Klein2007"/>)</t>
+<t>Predictable DNS TxIDs (see e.g. <xref target="Arce1997"/> and <xref target="Klein2007"/>)</t>
 </list>
 
 
@@ -120,7 +116,7 @@ See e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>.</t>
 </t>
 <t>Predictable DNS TxIDs <xref target="RFC1035"/>
 <list style="hanging">
-<t>See e.g. <xref target="Schuba1993"/> and <xref target="Klein2007"/>.</t>
+<t>See e.g. <xref target="Arce1997"/> and <xref target="Klein2007"/>.</t>
 </list>
 </t>
 </list>
@@ -174,7 +170,8 @@ These examples indicate that when new protocols are standardized or implemented,
 </section>
 
 <section title="Threat Model" anchor="threat-model">
-<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot observe the packets being transferred between the sender and the receiver(s) of the target protocol (if any). However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
+<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot necessarily observe all the packets being transferred between the sender and the receiver(s) of the
+target protocol, but may be able to observe some of them. However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
 </t>
 </section>
 
@@ -188,7 +185,7 @@ These examples indicate that when new protocols are standardized or implemented,
 </list>
 </t>
 
-<t>A number of protocol specifications (too many of them) have simply overlooked the security and privacy implications of transient numeric identifiers. Examples of them are the specification of TCP ephemeral ports in <xref target="RFC0793"/>, the specification of TCP sequence numbers in <xref target="RFC0793"/>, or the specification of the DNS TxID in <xref target="RFC1035"/>.</t>
+<t>A number of protocol specifications have simply overlooked the security and privacy implications of transient numeric identifiers. Examples of them are the specification of TCP ephemeral ports in <xref target="RFC0793"/>, the specification of TCP sequence numbers in <xref target="RFC0793"/>, or the specification of the DNS TxID in <xref target="RFC1035"/>.</t>
 
 <t>On the other hand, there are a number of protocol specifications that over-specify some of their associated transient numeric identifiers. For example, <xref target="RFC4291"/> essentially overloads the semantics of IPv6 Interface Identifiers (IIDs) by embedding link-layer addresses in the IPv6 IIDs, when the interoperability requirement of uniqueness could be achieved in other ways that do not result in negative security and privacy implications <xref target="RFC7721"/>. Similarly, <xref target="RFC2460"/> suggested the use of a global counter for the generation of Fragment Identification values, when the interoperability properties of uniqueness per {Src IP, Dst IP} could be achieved with other algorithms that do not result in negative security and privacy implications <xref target="RFC7739"/>.</t>
 
@@ -632,7 +629,7 @@ generates any kind of query, and that this identifier is copied the correspondin
 
     <section title="Acknowledgements">
 
-<t>The authors would like to thank (in alphabetical order) Bernard Aboba, Dave Crocker, Theo de Raadt, Sara Dickinson, Guillermo Gont, Christian Huitema, Kris Shrishak, Joe Touch, and Christopher Wood, for providing valuable comments on earlier versions of this document.</t>
+<t>The authors would like to thank (in alphabetical order) Bernard Aboba, Dave Crocker, Theo de Raadt, Sara Dickinson, Guillermo Gont, Christian Huitema, Vincent Roca, Kris Shrishak, Joe Touch, and Christopher Wood, for providing valuable comments on earlier versions of this document.</t>
 
 <t>The authors would like to thank (in alphabetical order) Steven Bellovin, Joseph Lorenzo Hall, Gre Norcie, and Martin Thomson, for providing valuable comments on <xref target="I-D.gont-predictable-numeric-ids"/>, on which this document is based.</t>
 
@@ -1517,7 +1514,20 @@ generates any kind of query, and that this identifier is copied the correspondin
 			<date year="2003"/>
 		</front>
 	</reference>
-
+	<reference anchor="Arce1997" target="http://www.openbsd.org/advisories/sni_12_resolverid.txt">
+		<front>
+			<title>BIND Vulnerabilities and Solutions</title>
+			<author initials="I." surname="Arce" fullname="Ivan Arce">
+				<organization>Core Seguridad del Información</organization>
+			</author>
+			<author initials="E." surname="Kargieman" fullname="Emiliano Kargieman">
+				<organization>Core Seguridad del Información</organization>
+			</author>
+			<date year="1997"/>
+		</front>
+	
+	</reference>
+	  http://www.openbsd.org/advisories/sni_12_resolverid.txt
 	<reference anchor="Klein2007" target="https://dl.packetstormsecurity.net/papers/attack/OpenBSD_DNS_Cache_Poisoning_and_Multiple_OS_Predictable_IP_ID_Vulnerability.pdf">
 		<front>
 			<title>OpenBSD DNS Cache Poisoning and Multiple O/S Predictable IP ID Vulnerability</title>
