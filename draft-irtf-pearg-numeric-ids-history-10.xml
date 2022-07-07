@@ -532,7 +532,7 @@ generator, whose lower bit is incremented roughly every 4 microseconds. However,
 </t>
 
 <t hangText="July 2008:">
-<vspace blankLines="0" />The CERT Coordination Centre published details of what became known as the &quot;Kaminsky Attack&quot; <xref target="VU-800113"/> <xref target=""Kaminsky2008"/> on the DNS. The attack exploited the lack of source port randomization in many major DNS implementations to perform cache poisoning in an effective and practical manner.
+<vspace blankLines="0" />The CERT Coordination Centre published details of what became known as the &quot;Kaminsky Attack&quot; <xref target="VU-800113"/> <xref target="Kaminsky2008"/> on the DNS. The attack exploited the lack of source port randomization in many major DNS implementations to perform cache poisoning in an effective and practical manner.
 </t>
 
 <t hangText="January 2009:">
@@ -590,6 +590,10 @@ generates any kind of query, and that this identifier is copied in the correspon
 
 <t hangText="March 2007:">
 <vspace blankLines="0" /><xref target="Klein2007c"/> finds that Microsoft Windows DNS Server generates predictable Query ID values.
+</t>
+
+<t hangText="October 2007:">
+<vspace blankLines="0" /><xref target="Klein2007"/> finds that OpenBSD's DNS software (based on ISC's BIND DNS Sercer) generates predictable Query ID values.
 </t>
 
 <t hangText="January 2009:">
