@@ -1,0 +1,1984 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+]>
+<?xml-stylesheet type="text/xsl" href="rfc2629.xslt" ?> <!-- used by XSLT processors -->
+<!-- OPTIONS, known as processing instructions (PIs) go here. -->
+<?rfc toc="yes" ?>
+<?rfc tocdepth="2" ?>
+<?rfc symrefs="yes" ?>
+<?rfc strict="no" ?>
+
+<rfc category="info" docName="draft-irtf-pearg-numeric-ids-generation-11" ipr="trust200902" submissionType="IRTF">
+
+<front>
+<title abbrev="Generation of Transient Numeric IDs">On the Generation of Transient Numeric Identifiers</title>
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
+
+      <address>
+        <postal>
+	  <street>Segurola y Habana 4310 7mo piso</street>	
+          <city>Ciudad Autonoma de Buenos Aires</city>
+          <region>Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+
+<!--        <phone>+54 11 4650 8472</phone>  -->
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+
+
+       </address>
+    </author>
+    <author fullname="Ivan Arce" initials="I." surname="Arce">
+      <organization abbrev="Quarkslab">Quarkslab</organization>
+
+      <address>
+        <postal>
+	  <street>Segurola y Habana 4310 7mo piso</street>	
+          <city>Ciudad Autonoma de Buenos Aires</city>
+          <region>Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+
+        <email>iarce@quarkslab.com</email>
+
+        <uri>https://www.quarkslab.com</uri>
+
+       </address>
+    </author>
+
+<date/>
+
+<workgroup>Internet Research Task Force (IRTF)</workgroup>
+
+<!--
+<area>Internet</area>
+<workgroup>Dynamic Host Configuration (dhc)</workgroup>
+-->
+<!-- <area/> -->
+<!-- <workgroup/> -->
+
+    <abstract>
+    <t>
+This document performs an analysis of the security and privacy implications of different types of "transient numeric identifiers" used in IETF protocols, and tries to categorize them based on their interoperability requirements and their associated failure severity when such requirements are not met. Subsequently, it provides advice on possible algorithms that could be employed to satisfy the interoperability requirements of each identifier category, while minimizing the negative security and privacy implications, thus providing guidance to protocol designers and protocol implementers. Finally, it describes a number of algorithms that have been employed in real implementations to generate transient numeric identifiers, and analyzes their security and privacy properties. This document is a product of the Privacy Enhancement and Assessment Research Group (PEARG) in the IRTF.
+    </t>
+    </abstract>
+</front>
+
+  <middle>
+  
+<section title="Introduction" anchor="intro">
+<t>Networking protocols employ a variety of transient numeric identifiers for different protocol objects, such as IPv4 and IPv6 Fragment Identifiers <xref target="RFC0791"/> <xref target="RFC8200"/>, IPv6 Interface Identifiers (IIDs) <xref target="RFC4291"/>, transport protocol ephemeral port numbers <xref target="RFC6056"/>, TCP Initial Sequence Numbers (ISNs) <xref target="RFC0793"/>, and DNS Query IDs <xref target="RFC1035"/>.<!--
+Network protocols employ a variety of transient numeric identifiers for different protocol entities, ranging from DNS Transaction IDs (TxIDs) to transport protocol ephemeral ports (e.g. TCP ephemeral ports) or IPv6 Interface Identifiers (IIDs).--> These identifiers usually have specific interoperability requirements (e.g. uniqueness during a specified period of time) that must be satisfied such that they do not result in negative interoperability implications, and an associated failure severity when such requirements are not met, ranging from soft to hard failures.
+</t>
+
+
+
+<t>For more than 30 years, a large number of implementations of IETF protocols have been subject to a variety of attacks, with effects ranging from Denial of Service (DoS) or data injection, to information leakages that could be exploited for pervasive monitoring <xref target="RFC7258"/>. The root cause of these issues has been, in many cases, the poor selection of transient numeric identifiers in such protocols, usually as a result of insufficient or misleading specifications. While it is generally trivial to identify an algorithm that can satisfy the interoperability requirements of a given transient numeric identifier, empirical evidence exists that doing so without negatively affecting the security and/or privacy properties of the aforementioned protocols is prone to error <xref target="I-D.irtf-pearg-numeric-ids-history"/>.</t>
+
+<t>For example, implementations have been subject to security and/or privacy issues resulting from:
+
+
+<list style="symbols">
+<t>Predictable IPv4 or IPv6 Fragment Identifiers (see e.g. <xref target="Sanfilippo1998a"/>, <xref target="RFC6274"/>, and <xref target="RFC7739"/>)</t>
+<t>Predictable IPv6 IIDs (see e.g. <xref target="RFC7721"/>, <xref target="RFC7707"/>, and <xref target="RFC7217"/>)</t> 
+<t>Predictable transport protocol ephemeral port numbers (see e.g. <xref target="RFC6056"/> and <xref target="Silbersack2005"/>)</t>
+<t>Predictable TCP Initial Sequence Numbers (ISNs) (see e.g. <xref target="Morris1985"/>, <xref target="Bellovin1989"/>, and <xref target="RFC6528"/>)</t>
+<t>Predictable initial timestamps in TCP timestamps Options (see e.g. <xref target="TCPT-uptime"/> and <xref target="RFC7323"/>)</t>
+<t>Predictable DNS Query IDs (see e.g. <xref target="Schuba1993"/> and <xref target="Klein2007"/>)</t>
+</list>
+
+
+
+Recent history indicates that when new protocols are standardized or new protocol implementations are produced, the security and privacy properties of the associated transient numeric identifiers tend to be overlooked, and inappropriate algorithms to generate transient numeric identifiers are either suggested in the specifications or selected by implementers. As a result, it should be evident that advice in this area is warranted.
+</t>
+
+<t>We note that the use of cryptographic techniques may readily mitigate some of the issues arising from predictable transient numeric identifiers. For example, cryptographic integrity and authentication can readily mitigate data injection attacks even in the presence of predictable transient numeric identifiers (such as "sequence numbers"). However, use of flawed algorithms (such as global counters) for generating transient numeric identifiers could still result in information leakages even when cryptographic techniques are employed.
+</t>
+
+<t>This document contains a non-exhaustive survey of transient numeric identifiers employed in various IETF protocols, and aims to categorize such identifiers based on their interoperability requirements, and the associated failure severity when such requirements are not met. Subsequently, it provides advice on possible algorithms that could be employed to satisfy the interoperability requirements of each category, while minimizing negative security and privacy implications. Finally, it analyzes several algorithms that have been employed in real implementations to meet such requirements, and analyzes their security and privacy properties.
+</t>
+
+<t>This document represents the consensus of the Privacy Enhancement and Assessment Research Group (PEARG).</t>
+
+<!--
+[fgont] Quite esto, ya que hay mas secciones, y es medio en vano describi que hace cada seccion 
+
+<t> <xref target="categorizing"/> categorizes identifiers in terms of their interoperability requirements and failure modes, such that possible algorithms for them can be discussed and analyzed.
+  <xref target="timeline"/> provides a non-exhaustive timeline regarding vulnerability disclosures related to predictable identifiers.
+</t>-->
+</section>
+
+<section title="Terminology" anchor="terminology">
+
+
+<t>
+<list style="hanging">
+<t hangText="Transient Numeric Identifier:">
+<vspace blankLines="0" />A data object in a protocol specification that can be used to definitely distinguish a protocol object (a datagram, network interface, transport protocol endpoint, session, etc.) from all other objects of the same type, in a given context. Transient numeric identifiers are usually defined as a series of bits, and represented using integer values. These identifiers are typically dynamically selected, as opposed to statically-assigned numeric identifiers (see e.g. <xref target="IANA-PROT"/>). We note that different transient numeric identifiers may have additional requirements or properties depending on their specific use in a protocol. We use the term "transient numeric identifier" (or simply "numeric identifier" or "identifier" as short forms) as a generic term to refer to any data object in a protocol specification that satisfies the identification property stated above.
+</t>
+
+<t hangText="Failure Severity:">
+<vspace blankLines="0" />The consequences of a failure to comply with the interoperability requirements of a given identifier. Severity considers the worst potential consequence of a failure, determined by the system damage and/or time lost to repair the failure. In this document we define two types of failure severity: "soft failure" and "hard failure".
+</t>
+
+
+<t hangText="Soft Failure:">
+<vspace blankLines="0" />A soft failure is a recoverable condition in which a protocol does not operate in the prescribed manner but normal operation can be resumed automatically in a short period of time. For example, a simple packet-loss event that is subsequently recovered with a packet-retransmission can be considered a soft failure.
+</t>
+
+
+<t hangText="Hard Failure:">
+<vspace blankLines="0" />A hard failure is a non-recoverable condition in which a protocol does not operate in the prescribed manner or it operates with excessive degradation of service. For example, an established TCP connection that is aborted due to an error condition constitutes, from the point of view of the transport protocol, a hard failure, since it enters a state from which normal operation cannot be resumed.
+</t>
+	
+</list>
+</t>
+
+<!--
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target='RFC2119' /> <xref target='RFC8174' /> when, and only when, they
+      appear in all capitals, as shown here.
+</t>
+-->
+</section>
+
+<section title="Threat Model" anchor="threat-model">
+<!--
+<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and cannot necessarily observe all the packets being transferred between the sender and the receiver(s) of the
+target protocol, but may be able to observe some of them. However, we assume the attacker can send any traffic to the target device(s), to e.g. sample transient numeric identifiers employed by such device(s).
+</t>
+-->
+
+<t>Throughout this document, we assume an attacker does not have physical or logical access to the system(s) being attacked, and that the attacker can only observe traffic explicitly directed to the attacker. For example, an attacker cannot observe traffic transferred between a sender and the receiver(s) of a target protocol, but may be able to interact with any of these entities, including by e.g. sending any traffic to them to sample transient numeric identifiers employed by the target systems when communicating with the attacker.
+</t>
+
+<t>For example, when analyzing vulnerabilities associated with TCP Initial Sequence Numbers (ISNs), we consider the attacker is unable to capture network traffic corresponding to a TCP connection between two other hosts. However, we consider the attacker is able to communicate with any of these hosts (e.g., establish a TCP connection with any of them), to e.g. sample the TCP ISNs employed by these systems when communicating with the attacker.</t>
+
+<t>Similarly, when considering host-tracking attacks based on IPv6 interface identifiers, we consider an attacker may learn the IPv6 address employed by a victim node if e.g. the address becomes exposed as a result of the victim node communicating with an attacker-operated server. Subsequently, an attacker may perform host-tracking by probing a set of target addresses composed by a set of target prefixes and the IPv6 interface identifier originally learned by the attacker. Alternatively, an attacker may perform host tracking if e.g. the victim node communicates with an attacker-operated server as it moves from one location to another, those exposing its configured addresses. We note that none of these scenarios requires the attacker observe traffic not explicitly directed to the attacker.
+</t>
+
+
+</section>
+
+
+<section title="Issues with the Specification of Transient Numeric Identifiers" anchor="issues">
+<t>While assessing protocol specifications regarding the use of transient numeric identifiers, we have found that most of the issues discussed in this document arise as a result of one of the following conditions:
+
+<list style="symbols">
+<t>Protocol specifications that under-specify the requirements for their transient numeric identifiers</t>
+<t>Protocol specifications that over-specify their transient numeric identifiers</t>
+<t>Protocol implementations that simply fail to comply with the specified requirements</t>
+</list>
+</t>
+
+<t>A number of protocol specifications (too many of them) have simply overlooked the security and privacy implications of transient numeric identifiers <xref target="I-D.irtf-pearg-numeric-ids-history"/>. Examples of them are the specification of TCP ephemeral ports in <xref target="RFC0793"/>, the specification of TCP sequence numbers in <xref target="RFC0793"/>, or the specification of the DNS Query ID in <xref target="RFC1035"/>.</t>
+
+<t>On the other hand, there are a number of protocol specifications that over-specify some of their associated transient numeric identifiers. For example, <xref target="RFC4291"/> essentially overloads the semantics of IPv6 Interface Identifiers (IIDs) by embedding link-layer addresses in the IPv6 IIDs, when the interoperability requirement of uniqueness could be achieved in other ways that do not result in negative security and privacy implications <xref target="RFC7721"/>. Similarly, <xref target="RFC2460"/> suggested the use of a global counter for the generation of Fragment Identification values, when the interoperability properties of uniqueness per {IPv6 Source Address, IPv6 Destination Address} could be achieved with other algorithms that do not result in negative security and privacy implications <xref target="RFC7739"/>.</t>
+
+<t>Finally, there are protocol implementations that simply fail to comply with existing protocol specifications. For example, some popular operating systems (notably Microsoft Windows) still fail to implement transport protocol ephemeral port randomization, as recommended in <xref target="RFC6056"/>.</t>
+
+</section>
+
+
+
+
+<section title="Protocol Failure Severity" anchor="failure-severity">
+<t><xref target="terminology"/> defines the concept of "Failure Severity", along with two types of failure severities that we employ throughout this document: soft and hard.</t>
+
+<t>Our analysis of the severity of a failure is performed from the point of view of the protocol in question. However, the corresponding severity on the upper protocol (or application) might not be the same as that of the protocol in question. For example, a TCP connection that is aborted might or might not result in a hard failure of the upper application: if the upper application can establish a new TCP connection without any impact on the application, a hard failure at the TCP protocol may have no severity at the application level. On the other hand, if a hard failure of a TCP connection results in excessive degradation of service at the application layer, it will also result in a hard failure at the application.
+</t>
+</section>
+
+
+<section title="Categorizing Transient Numeric Identifiers" anchor="categorizing">
+<t>This section includes a non-exhaustive survey of transient numeric identifiers, which are representative of all the possible combinations of interoperability requirements and failure severities found in popular protocols from different layers. Additionally, it proposes a number of categories that can accommodate these identifiers based on their interoperability requirements and their associated failure severity (soft or hard).
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+All other transient numeric identifiers that were analyzed as part of this effort could be accommodated into one of the existing categories from <xref target="survey-table"/>.
+</t>
+</list>
+</t>
+
+
+<!-- [fgont] Basado en el contenido de la seccion anterior, tal vez esta tabla podria contener una columna adicional que indique si el problema es "under-specification", "over-specification", o "implementation-flaw" ?  
+
+No se si aportaria mucho en terminos de categorizar, aunque si tal vez en el sentido de servir de "sample" de cual es el rigen de los problemas.
+
+Ideas?
+
+-->
+
+    <texttable title="Survey of Transient Numeric Identifiers" style="all" anchor="survey-table">
+        <ttcol align="center">Identifier</ttcol> <ttcol align="center">Interoperability Requirements</ttcol> <ttcol align="center">Failure Severity</ttcol>
+        <c>IPv6 Frag ID</c>	<c>Uniqueness (for IP address pair)</c>					<c>Soft/Hard (1)</c>
+        <c>IPv6 IID</c>		<c>Uniqueness (and stable within IPv6 prefix) (2)</c>	<c>Soft (3)</c>
+        <c>TCP ISN</c>		<c>Monotonically-increasing (4)</c>							<c>Hard (4)</c>
+        <c>TCP initial timestamp</c>		<c>Monotonically-increasing (5)</c>							<c>Hard (5)</c>
+        <c>TCP eph. port</c><c>Uniqueness (for connection ID)</c>					<c>Hard</c>
+        <c>IPv6 Flow Label</c>	<c>Uniqueness</c>										<c>None (6)</c>
+        <c>DNS Query ID</c>		<c>Uniqueness</c>										<c>None (7)</c>
+    </texttable>
+
+<t>NOTE:
+<list style="hanging">
+<t hangText="(1)">
+<vspace blankLines="0" />While a single collision of Fragment ID values would simply lead to a single packet drop (and hence a "soft" failure), repeated collisions at high data rates might trash the Fragment ID space, leading to a hard failure <xref target="RFC4963"/>.</t>
+<t hangText="(2)">
+<vspace blankLines="0" />While the interoperability requirements are simply that the Interface ID results in a unique IPv6 address, for operational reasons it is typically desirable that the resulting IPv6 address (and hence the corresponding Interface ID) be stable within each network <xref target="RFC7217"/> <xref target="RFC8064"/>.</t>
+<t hangText="(3)">
+<vspace blankLines="0" />While IPv6 Interface IDs must result in unique IPv6 addresses, IPv6 Duplicate Address Detection (DAD) <xref target="RFC4862"/> allows for the detection of duplicate addresses, and hence such Interface ID collisions can be recovered.</t>
+<t hangText="(4)">
+<vspace blankLines="0" />In theory, there are no interoperability requirements for TCP Initial Sequence Numbers (ISNs), since the TIME-WAIT state and TCP's "quiet time" concept take care of old segments from previous incarnations of a connection. However, a widespread optimization allows for a new incarnation of a previous connection to be created if the ISN of the incoming SYN is larger than the last sequence number seen in that direction for the previous incarnation of the connection. Thus, monotonically-increasing TCP ISNs allow for such optimization to work as expected <xref target="RFC6528"/>, and can help avoid connection-establishment failures.</t>
+
+<t hangText="(5)">
+<vspace blankLines="0" />Strictly speaking, there are no interoperability requirements for the *initial* TCP timestamp employed by a TCP instance (i.e., the TS Value (TSval) in a segment with the SYN bit set). However, some TCP implementations allow a new incarnation of a previous connection to be created if the TSval of the incoming SYN is larger than the last TSval seen in that direction for the previous incarnation of the connection (please see <xref target="RFC6191"/>). Thus, monotonically-increasing TCP initial timestamps (across connections to the same endpoint) allow for such optimization to work as expected <xref target="RFC6191"/>, and can help avoid connection-establishment failures.</t>
+
+<t hangText="(6)">
+<vspace blankLines="0" />The IPv6 Flow Label is typically employed for load sharing <xref target="RFC7098"/>, along with the Source and Destination IPv6 addresses. Reuse of a Flow Label value for the same set {Source Address, Destination Address} would typically cause both flows to be multiplexed onto the same link. However, as long as this does not occur deterministically, it will not result in any negative implications.</t>
+
+<t hangText="(7)">
+<vspace blankLines="0" />DNS Query IDs are employed, together with the Source Address, Destination Address, Source Port, and Destination Port, to match DNS requests and responses. However, since an implementation knows which DNS requests were sent for that set of {Source Address, Destination Address, Source Port, and Destination Port, Query ID}, a collision of Query IDs would result, if anything, in a small performance penalty (the response would nevertheless be discarded when it is found that it does not answer the query sent in the corresponding DNS query).</t>
+</list>
+</t>
+
+<t>Based on the survey above, we can categorize identifiers as follows:</t>
+
+    <texttable title="Identifier Categories" style="all" anchor="cat-table">
+        <ttcol align="center">Cat #</ttcol><ttcol align="center">Category</ttcol><ttcol align="center">Sample Proto IDs</ttcol>
+	<c>1</c><c>Uniqueness (soft failure)</c><c>IPv6 Flow L., DNS Query ID</c>
+	<c>2</c><c>Uniqueness (hard failure)</c><c>IPv6 Frag ID, TCP ephemeral port</c>
+	<c>3</c><c>Uniqueness, stable within context (soft failure)</c><c>IPv6 IID</c>
+	<c>4</c><c>Uniqueness, monotonically increasing within context (hard failure)</c><c>TCP ISN, TCP initial timestamp</c>
+    </texttable>
+
+<t>
+We note that Category #4 could be considered a generalized case of category #3, in which a monotonically increasing element is added to a stable (within context) element, such that the resulting identifiers are monotonically increasing within a specified context. That is, the same algorithm could be employed for both #3 and #4, given appropriate parameters.
+</t>
+</section>
+
+
+
+<section title="Common Algorithms for Transient Numeric Identifier Generation" anchor="common-algorithms">
+<t>The following subsections describe some sample algorithms that can be employed for generating transient numeric identifiers for each of the categories above, while mitigating the vulnerabilities analyzed in <xref target="vulns"/> of this document.</t>
+
+<t>All of the variables employed in the algorithms of the following subsections are of "unsigned integer" type, except for the "retry" variable, that is of (signed) &quot;integer&quot; type.</t>
+
+
+<section title="Category #1: Uniqueness (soft failure)" anchor="cat-1-alg">
+
+<t>The requirement of uniqueness with a soft failure severity can be complied with a Pseudo-Random Number Generator (PRNG).
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+Please see <xref target="RFC4086"/> regarding randomness requirements for security.</t>
+</list>
+</t>
+
+<t>While most systems provide access to a PRNG, many of such PRNG implementations are not cryptographically secure, and therefore might be statistically biased or subject to adversarial influence. For example, ISO C <xref target="C11"/> rand(3) implementations are not cryptographically secure.
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+Section 7.1 ("Uniform Deviates") of <xref target="Press1992"/> discusses the underlying issues affecting ISO C <xref target="C11"/> rand(3) implementations.
+</t>
+</list>
+</t>
+
+<t>On the other hand, a number of systems provide an interface to a Cryptographically Secure PRNG (CSPRNG) <xref target="RFC8937"/> <xref target="RFC4086"/>, which guarantees high entropy, unpredictability, and good statistical distribution of the random values generated. For example, GNU/Linux's CSPRNG implementation is available via the getentropy(3) interface <xref target="GETENTROPY"/>, while OpenBSD's CSPRNG implementation is available via the arc4random(3) and arc4random_uniform(3) interfaces <xref target="ARC4RANDOM"/>. Where available, these CSPRNGs should be preferred over e.g. POSIX <xref target="POSIX"/> random(3) or ISO C <xref target="C11"/> rand(3) implementations.</t>
+
+<t>In scenarios where a CSPRNG is not readily available to select transient numeric identifiers of Category #1, a security and privacy assessment of employing a regular PRNG should be performed, supporting the implementation decision.
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+<xref target="Aumasson2018"/>, <xref target="Press1992"/>, and <xref target="Knuth1983"/>, discuss theoretical and practical aspects of pseudorandom numbers generation, and provide guidance on how to evaluate PRNGs.</t>
+</list>
+</t>
+
+
+<t>We note that since the premise is that collisions of transient numeric identifiers of this category only leads to soft failures, in many cases, the algorithm might not need to check the suitability of a selected identifier (i.e., the suitable_id() function, described below, could always return "true").</t>
+
+<t>In scenarios where e.g. simultaneous use of a given numeric ID is undesirable and the implementation detects such condition, an implementation may opt to select the next available identifier in the same sequence, or select another random number. <xref target="simple-randomization"/> is an implementation of the former strategy, while <xref target="simple-randomization2"/> is an implementation of the later. Typically, the algorithm in <xref target="simple-randomization2"/> results in a more uniform distribution of the generated transient numeric identifiers. However, for transient numeric identifiers where an implementation typically keeps  local state about unsuitable/used identifiers, the algorithm in <xref target="simple-randomization2"/> may require many more iterations than the algorithm in <xref target="simple-randomization"/> to generate a suitable transient numeric identifier. This will usually be affected by the current usage ratio of transient numeric identifiers (i.e., number of numeric identifiers considered suitable / total number of numeric identifiers) and other parameters. Therefore, in such cases many implementations tend to prefer the algorithm in <xref target="simple-randomization"/> over the algorithm in <xref target="simple-randomization2"/>.
+</t>
+ 
+
+
+<section title="Simple Randomization Algorithm" anchor="simple-randomization">
+
+	
+    <t>
+    <figure><artwork>
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    next_id = min_id + (random() % id_range);
+    retry = id_range;
+
+    do {
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+        if (next_id == max_id) {
+            next_id = min_id;
+        } else {
+            next_id++;
+        }
+
+        retry--;
+        
+    } while (retry > 0);
+
+    return ERROR;
+    </artwork>
+    </figure>
+
+    </t>
+    <!-- FreeBSD/OpenBSD: in_pcb.c, Linux: tcp_ipv4.c(+grsecurity) -->
+
+<t>
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+random() is a PRNG that returns a pseudo-random unsigned integer number of appropriate size. <!-- Note that the output needs to be unpredictable, and typical implementations of the POSIX random() function do not necessarily meet this requirement. See <xref target="RFC4086"/> for randomness requirements for security. -->Beware that "adapting" the length of the output of random() with a modulo operator (e.g., C-language's "%") may change the distribution of the PRNG. To preserve a uniform distribution, the rejection sampling technique <xref target="Romailler2020"/> can be used.</t>
+
+<t>
+The function suitable_id() can check, when possible and desirable, whether a selected transient numeric identifier is suitable (e.g. it is not already in use). Depending on how/where the numeric identifier is used, it may or may not be possible (or even desirable) to check whether the numeric identifier is in use (or whether it has been recently employed). When an identifier is found to be unsuitable, this algorithm selects the next available numeric identifier in sequence.
+</t>
+
+<t>Even when this algorithm selects numeric IDs randomly, it is biased towards the first available numeric ID after a sequence of unavailable numeric IDs. For example, if this algorithm is employed for transport protocol ephemeral port randomization <xref target="RFC6056"/> and the local list of unsuitable port numbers (e.g., registered port numbers that should not be used for ephemeral ports) is significant, an attacker may actually have a significantly better chance of guessing a port number.
+</t>
+
+<t>
+All the variables (in this and all the algorithms discussed in this document) are unsigned integers.</t>
+</list>
+</t>
+
+<t>Assuming the randomness requirements for the PRNG are met (see <xref target="RFC4086"/>), this algorithm does not suffer from any of the issues discussed in <xref target="vulns"/>.</t>
+</section>
+
+<section title="Another Simple Randomization Algorithm" anchor="simple-randomization2">
+<t>The following pseudo-code illustrates another algorithm for selecting a random transient numeric identifier which, in the event a selected identifier is found to be unsuitable (e.g., already in use), another identifier is randomly selected:</t>
+	
+    <t>
+    <figure>
+    <artwork>
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    retry = id_range;
+
+    do {
+        next_id = min_id + (random() % id_range);
+        
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+        retry--;
+        
+    } while (retry > 0);
+
+    return ERROR;
+
+    </artwork>
+    </figure>
+    </t>
+
+<t>This algorithm might be unable to select a transient numeric identifier (i.e., return "ERROR") even if there are suitable identifiers available, in cases where a large number of identifiers are found to be unsuitable (e.g. "in use").</t>
+
+<t>The same considerations from <xref target="simple-randomization"/> with respect to the properties of random() and the adaptation of its output length apply to this algorithm.</t>
+
+<t>Assuming the randomness requirements for the PRNG are met (see <xref target="RFC4086"/>), this algorithm does not suffer from any of the issues discussed in <xref target="vulns"/>.</t>
+</section>
+
+</section>
+
+<section title="Category #2: Uniqueness (hard failure)" anchor="cat-2-alg">
+<t>One of the most trivial approaches for generating unique transient numeric identifier (with a hard failure severity) is to reduce the identifier reuse frequency by generating the numeric identifiers with a monotonically-increasing function (e.g. linear). As a result, any of the algorithms described in <xref target="cat-4-alg"/> ("Category #4: Uniqueness, monotonically increasing within context (hard failure)") can be readily employed for complying with the requirements of this transient numeric identifier category.
+</t>
+
+<t>In cases where suitability (e.g. uniqueness) of the selected identifiers can be definitely assessed by the local system, any of the algorithms described in <xref target="cat-1-alg"/> ("Category #1: Uniqueness (soft failure)") can be readily employed for complying with the requirements of this numeric identifier category.</t>
+
+<t>
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+In the case of e.g. TCP ephemeral ports or TCP ISNs, a transient numeric identifier that might seem suitable from the perspective of the local system, might actually be unsuitable from the perspective of the remote system (e.g., because there is state associated with the selected identifier at the remote system). Therefore, in such cases it is not possible employ the algorithms from <xref target="cat-1-alg"/> ("Category #1: Uniqueness (soft failure)").
+</t>
+</list>
+</t>
+
+</section>
+
+
+<section title="Category #3: Uniqueness, stable within context (soft failure)" anchor="cat-3-alg">
+<t>The goal of the following algorithm is to produce identifiers that are stable for a given context (identified by &quot;CONTEXT&quot;), but that change when the aforementioned context changes. <!--For example, if the identifiers being generated must be unique for each {src IP, dst IP} set, then each possible combination of {src IP, dst IP} should have a corresponding "next_id" value. -->
+</t>
+
+<t><!--Keeping one value for each possible "context" may in many cases be considered too onerous in terms of memory requirements. -->In order to avoid storing in memory the transient numeric identifiers computed for each CONTEXT, the following algorithm employs a calculated technique (as opposed to keeping state in memory) to generate a stable transient numeric identifier for each given context.
+</t>
+
+
+    <t>
+    <figure><artwork>
+    /* Transient Numeric ID selection function  */
+
+    id_range = max_id - min_id + 1;
+
+    retry = 0;
+
+    do {
+        offset = F(CONTEXT, retry, secret_key);
+        next_id = min_id + (offset % id_range);
+
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+        retry++;
+        
+    } while (retry &lt;= MAX_RETRIES);
+
+    return ERROR;
+
+    </artwork>
+    </figure>
+    </t>
+
+
+
+
+<!--
+<t>F() must be a cryptographically-secure hash function (e.g. SHA-256 <xref target="FIPS-SHS"/>), that is computed over the concatenation of its arguments. 
+-->
+
+<t>In this algorithm, the function F() provides a stateless and stable per-CONTEXT offset, where CONTEXT is the concatenation of all the elements that define the given context. 
+
+<list style="hanging">
+<t>For example, if this algorithm is expected to produce IPv6 IIDs that are unique per network interface and SLAAC autoconfiguration prefix, the CONTEXT should be the concatenation of e.g. the network interface index and the SLAAC autoconfiguration prefix (please see <xref target="RFC7217"/> for an implementation of this algorithm for generation of stable IPv6 IIDs).
+</t>
+</list>
+</t>
+
+<t>F() is a pseudorandom function (PRF). It must not be computable from the outside (without knowledge of the secret key). F() must also be difficult to reverse, such that it resists attempts to obtain the secret_key, even when given samples of the output of F() and knowledge or control of the other input parameters. F() should produce an output of at least as many bits as required for the transient numeric identifier. SipHash-2-4 (128-bit key, 64-bit output) <xref target="SipHash"/> and BLAKE3 (256-bit key, arbitrary-length output) <xref target="BLAKE3"/> are two possible options for F(). Alternatively, F() could be implemented with a keyed-hash message authentication code (HMAC) <xref target="RFC2104"/>. HMAC-SHA-256 <xref target="FIPS-SHS"/> would be one possible option for such implementation alternative. Note: Use of HMAC-MD5 <xref target="RFC1321"/> is not recommended for F() <xref target="RFC6151"/>.</t>
+
+
+<t>The result of F() is no more secure than the secret key, and therefore 'secret_key' must be unknown to the attacker, and must be of a reasonable length. 'secret_key' must remain stable for a given CONTEXT, since otherwise the numeric identifiers generated by this algorithm would not have the desired stability properties (i.e., stable for a given CONTEXT). In most cases, 'secret_key' should be selected with a PRNG (see <xref target="RFC4086"/> for recommendations on choosing secrets) at an appropriate time, and stored in stable or volatile storage (as necessary) for future use.
+    </t>
+
+<t>The result of F() is stored in the variable 'offset', which may take any value within the storage type range, since we are restricting the resulting identifier to be in the range [min_id, max_id] in a similar way as in the algorithm described in <xref target="simple-randomization"/>.</t>
+
+
+<t>suitable_id() checks whether the candidate identifier has suitable uniqueness properties. Collisions (i.e., an identifier that is not unique) are recovered by incrementing the 'retry' variable and recomputing F(), up to a maximum of MAX_RETRIES times. However, recovering from collisions will usually result in identifiers that fail to remain constant for the specified context. This is normally acceptable when the probability of collisions is small, as in the case of e.g. IPv6 IIDs resulting from SLAAC <xref target="RFC7217"/> <xref target="RFC8981"/>.</t>
+ 
+
+<t>For obvious reasons, the transient numeric identifiers generated with this algorithm allow for network activity correlation and fingerprinting within "CONTEXT". However, this is essentially a design goal of this category of transient numeric identifiers.</t>
+
+</section>
+
+<section title="Category #4: Uniqueness, monotonically increasing within context (hard failure)" anchor="cat-4-alg">
+
+
+
+<section title="Per-context Counter Algorithm" anchor="per-context-counter">
+<t>One possible way of selecting unique monotonically-increasing identifiers (per context) is to employ a per-context counter. Such an algorithm could be described as follows:</t>
+
+    <t>
+    <figure>
+    <artwork>
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    retry = id_range;
+    id_inc = increment() % id_range;
+
+    if( (next_id = lookup_counter(CONTEXT)) == ERROR){
+         next_id = min_id + random() % id_range;
+    }
+
+    do {
+        if ( (max_id - next_id) >= id_inc){
+            next_id = next_id + id_inc;
+        }
+        else {
+            next_id = min_id + id_inc - (max_id - next_id);
+        }
+
+        if (suitable_id(next_id)){
+            store_counter(CONTEXT, next_id);
+            return next_id;
+        }
+
+        retry = retry - id_inc;
+        
+    } while (retry > 0);
+
+    return ERROR;
+    </artwork>
+    </figure>
+    </t>
+<t>
+<list style="hanging">
+<t hangText="NOTES:">
+<vspace blankLines="0"/>
+increment() returns a small integer that is employed to increment the current counter value to obtain the next transient numeric identifier. This value must be much smaller than the number of possible values for the numeric IDs (i.e., "id_range"). Most implementations of this algorithm employ a constant increment of 1. Using a value other than 1 can help mitigate some information leakages (please see below), at the expense of a possible increase in the numeric ID reuse frequency.</t>
+<t>The code above makes sure that the increment employed in the algorithm (id_inc) is always smaller than the number of possible values for the numeric IDs (i.e., "max_id - min_d + 1"). However, as noted above, this value must also be much smaller than the number of possible values for the numeric IDs.</t>
+<t>lookup_counter() is a function that returns the current counter for a given context, or an error condition if that counter does not exist.</t>
+<t>store_counter() is a function that saves a counter value for a given context.</t>
+<t>suitable_id() is a function that checks whether the resulting identifier is acceptable (e.g., whether it is not already in use, etc.).
+</t>
+</list>
+</t>
+
+<t>Essentially, whenever a new identifier is to be selected, the algorithm checks whether a counter for the corresponding context exists. If does, the value of such counter is incremented to obtain the new transient numeric identifier, and the counter is updated. If no counter exists for such context, a new counter is created and initialized to a random value, and used as the selected transient numeric identifier. This algorithm produces a per-context counter, which results in one monotonically-increasing function for each context. Since each counter is initialized to a random value, the resulting values are unpredictable by an off-path attacker.
+</t>
+
+<t>The choice of id_inc has implications on both the security and privacy properties of the resulting identifiers, but also on the corresponding interoperability properties. On one hand, minimizing the increments generally minimizes the identifier reuse frequency, albeit at increased predictability. On the other hand, if the increments are randomized, predictability of the resulting identifiers is reduced, and the information leakage produced by global constant increments is mitigated. However, using larger increments than necessary can result in higher numeric ID reuse frequency.
+</t>
+
+<t>This algorithm has the following drawbacks:
+<list style="symbols">
+<t>It requires an implementation to store each per-CONTEXT counter in memory. If, as a result of resource management, the counter for a given context must be removed, the last transient numeric identifier value used for that context will be lost.  Thus, if subsequently an identifier needs to be generated for the same context, the corresponding counter will need to be recreated and reinitialized to a random value, thus possibly leading to reuse/collision of numeric identifiers.
+</t>
+
+<t>
+Keeping one counter for each possible "context" may in some cases be considered too onerous in terms of memory requirements.
+</t>
+
+<!--
+<t>An implementation may map more than one context to the same counter, such the amount of memory required to store counters is reduced, at the expense of a possible unnecessary increase in the numeric identifier reuse frequency. In such cases, if the identifiers are predictable by the destination system (in case the destination host represents the "context"), a vulnerable host might possibly leak to third parties the identifiers used by other hosts to send traffic to it (i.e., a vulnerable Host B could leak to Host C the identifier values that Host A is using to send packets to Host B). Appendix A of <xref target="RFC7739"/> describes one possible scenario for such leakage in detail. Employing small random numbers for the increments (i.e., for increment() function) may help mitigate this kind of information leakage.
+</t>
+-->
+</list>
+</t>
+
+<t>Otherwise, the identifiers produced by this algorithm do not suffer from the other issues discussed in <xref target="vulns"/>.</t>
+</section>
+
+
+
+
+<section title="Simple PRF-Based Algorithm" anchor="simple-hash">
+<t>The goal of this algorithm is to produce monotonically-increasing transient numeric identifiers (for each given context), with a randomized initial value. For example, if the identifiers being generated must be monotonically-increasing for each {IP Source Address, IP Destination Address} set, then each possible combination of {IP Source Address, IP Destination Address} should have a separate monotonically-increasing sequence, that starts at a different random value.
+</t>
+
+<t>Instead of maintaining a per-context counter (as in the algorithm from <xref target="per-context-counter"/>), the following algorithm employs a calculated technique to maintain a random offset for each possible context.
+</t>
+
+
+    <t>
+    <figure><artwork>
+    /* Initialization code */
+    counter = 0;
+
+    /* Transient Numeric ID selection function  */
+
+    id_range = max_id - min_id + 1;
+    id_inc = increment() % id_range;
+    offset = F(CONTEXT, secret_key);
+    retry = id_range;
+
+    do {
+        next_id = min_id + (offset + counter) % id_range;
+        counter = counter + id_inc;
+
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+        retry = retry - id_inc;
+
+    } while (retry > 0);
+
+    return ERROR;
+
+    </artwork>
+    </figure>
+    </t>
+
+<!--
+    <t>
+    The function F() should be a cryptographically-secure hash function (e.g. SHA-256 <xref target="FIPS-SHS"/>). CONTEXT is the concatenation of all the elements that define a given context. For example, if this algorithm is expected to produce identifiers that are monotonically-increasing for each set (Source IP Address, Destination IP Address), CONTEXT should be the concatenation of these two IP addresses.
+    </t>
+-->
+    
+    
+<!-- Nuevo:
+    
+<t>F() is a pseudorandom function (PRF) that must not be computable from the outside (without knowledge of the secret key). F() must also be difficult to reverse, such that it resists attempts to obtain the secret_key, even when given samples of the output of F() and knowledge or control of the other input parameters. F() should produce an output of at least as many bits as required for the transient numeric identifier. F() could be the result of applying a cryptographic hash over an encoded version of the function parameters.  While this document does not recommend a specific mechanism for encoding the function parameters (or a specific cryptographic hash function), a cryptographically robust construction will ensure that the mapping from parameters to the hash function input is an injective map, as might be attained by using fixed-width encodings and/or length-prefixing variable-length parameters. SHA-256 <xref target="FIPS-SHS"/> is one possible option for F(). Note: MD5 <xref target="RFC1321"/> is considered unacceptable for F() <xref target="RFC6151"/>.</t>
+-->
+
+    <t>In the algorithm above, the function F() provides a (stateless) unpredictable offset for each given context (as identified by 'CONTEXT').
+    </t>
+    
+<t>F() is a PRF, with the same properties as those specified for F() in <xref target="cat-3-alg"/>.</t>
+
+
+<t>CONTEXT is the concatenation of all the elements that define a given context. For example, if this algorithm is expected to produce identifiers that are monotonically-increasing for each set (Source IP Address, Destination IP Address), CONTEXT should be the concatenation of these two IP addresses.</t>
+
+    <t>
+    The function F() provides a &quot;per-CONTEXT&quot; fixed offset within the numeric identifier "space".  Both the 'offset' and 'counter' variables may take any value within
+    the storage type range since we are restricting the resulting identifier to be in the range [min_id, max_id] in a similar way as in the algorithm described in <xref target="simple-randomization"/>.  This allows us
+    to simply increment the 'counter' variable and rely on the
+    unsigned integer to wrap around.
+    </t>
+
+
+<!--
+    <t>
+The secret should be chosen to be as random as possible (see <xref target="RFC4086"/> for recommendations on choosing secrets).
+    </t>
+-->
+
+<t>
+The result of F() is no more secure than the secret key, and therefore 'secret_key' must be unknown to the attacker, and must be of a reasonable length. 'secret_key' must remain stable for a given CONTEXT, since otherwise the numeric identifiers generated by this algorithm would not have the desired stability properties (i.e., monotonically-increasing for a given CONTEXT). In most cases, 'secret_key' should be selected with a PRNG (see <xref target="RFC4086"/> for recommendations on choosing secrets) at an appropriate time, and stored in stable or volatile storage (as necessary) for future use.</t>
+
+<t>It should be noted that, since this algorithm uses a global counter (&quot;counter&quot;) for selecting identifiers (i.e., all counters share the same increments space), this algorithm results in an information leakage (as described in <xref target="information-leakage"/>). For example, if this algorithm were used for selecting TCP ephemeral ports, and an attacker could force a client to periodically establish a new TCP connection to an attacker-controlled system (or through an attacker-observable routing path), the attacker could subtract consecutive source port values to obtain the number of outgoing TCP connections established globally by the victim host within that time period (up to wrap-around issues and five-tuple collisions, of course). This information leakage could be partially mitigated by employing small random values for the increments (i.e., increment() function), instead of having increment() return the constant "1".</t>
+<t>We nevertheless note that an improved mitigation of this information leakage could be more successfully achieved by employing the algorithm from <xref target="double-hash"/>, instead.</t>
+
+<!--
+<t>From a functional perspective, this algorithm results in numeric identifiers with similar properties to those generated with the algorithm specified in <xref target="per-context-counter"/> when multiple
+-->
+</section>
+
+
+
+<section title="Double-PRF Algorithm" anchor="double-hash">
+
+    <t>A trade-off between maintaining a single global 'counter' variable and maintaining 2**N 'counter' variables (where N is the width of the result of F()), could be achieved as follows. The system would keep an array of TABLE_LENGTH values, which would provide a separation of the increment space into multiple buckets. This improvement could be incorporated into the algorithm from <xref target="simple-hash"/> as follows:</t>
+
+    <t>
+    <figure>
+    <artwork>
+    /* Initialization code */
+
+    for(i = 0; i &lt; TABLE_LENGTH; i++) {
+        table[i] = random();
+    }
+
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    id_inc = increment() % id_range;
+    offset = F(CONTEXT, secret_key1);
+    index = G(CONTEXT, secret_key2) % TABLE_LENGTH;
+    retry = id_range;
+
+    do {
+        next_id = min_id + (offset + table[index]) % id_range;
+        table[index] = table[index] + id_inc;
+ 
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+       retry = retry - id_inc;
+
+    } while (retry > 0);
+
+    return ERROR;
+
+    </artwork>
+    </figure>
+    </t>
+
+<t>
+'table[]' could be initialized with random values, as indicated by the initialization code in the pseudo-code above.</t>
+
+<!--
+<t>Both F() and G() should be cryptographically-secure hash functions (e.g. SHA-256 <xref target="FIPS-SHS"/>) computed over the concatenation of each of their respective arguments. Both F() and G() would employ the same CONTEXT (the concatenation of all the elements that define a given context), and would use separate secret keys (secret_key1, and secret_key2, respectively).
+</t>
+-->
+
+<t>Both F() and G() are PRFs, with the same properties as those required for F() in <xref target="cat-3-alg"/>.</t>
+
+<t>
+The results of F() and G() are no more secure than their respective secret keys ('secret_key1' and 'secret_key2', respectively), and therefore both secret keys must be unknown to the attacker, and must be of a reasonable length. Both secret keys must remain stable for the given CONTEXT, since otherwise the transient numeric identifiers generated by this algorithm would not have the desired stability properties (i.e., monotonically-increasing for a given CONTEXT). In most cases, both secret keys should be selected with a PRNG (see <xref target="RFC4086"/> for recommendations on choosing secrets) at an appropriate time, and stored in stable or volatile storage (as necessary) for future use.
+</t>
+
+<!--
+<t>
+The function G() should be a cryptographic hash function.  It should use the same CONTEXT as F(), and a secret key value to compute a value between 0 and (TABLE_LENGTH-1). 
+</t>
+-->
+
+
+<t>The 'table[]' array assures that successive transient numeric identifiers for a given context will be monotonically-increasing. Since the increments space is separated into TABLE_LENGTH different spaces, the identifier reuse frequency will be (probabilistically) lower than that of the algorithm in <xref target="simple-hash"/>. That is, the generation of an identifier for one given context will not necessarily result in increments in the identifier sequence of other contexts. It is interesting to note that the size of 'table[]' does not limit the number of different identifier sequences, but rather separates the *increment space* into TABLE_LENGTH different spaces. The selected transient numeric identifier sequence will be obtained by adding the corresponding entry from 'table[]' to the value in the 'offset' variable, which selects the actual identifier sequence space (as in the algorithm from <xref target="simple-hash"/>). </t>
+
+<t>An attacker can perform traffic analysis for any &quot;increment
+  space&quot;  (i.e., context) into which the attacker has &quot;visibility&quot; -- namely, the attacker can force a system to generate identifiers for G(CONTEXT, secret_key2), where the result of G() identifies the target &quot;increment space&quot;. However, the attacker's ability to perform traffic analysis is very reduced when compared to the simple PRF-based identifiers (described in <xref target="simple-hash"/>) and the predictable linear identifiers (described in <xref target="trad_selection"/>). Additionally, an implementation can further limit the attacker's ability to perform traffic analysis by further separating the increment space (that is, using a larger value for TABLE_LENGTH) and/or by randomizing the increments (i.e., increment() returning a small random number as opposed to the constant "1").</t>
+
+<t>Otherwise, this algorithm does not suffer from the issues discussed in <xref target="vulns"/>.</t>
+
+</section>
+
+
+</section>
+
+</section>
+
+
+<section title="Common Vulnerabilities Associated with Transient Numeric Identifiers" anchor="vulns">
+<section title="Network Activity Correlation" anchor="activity-correlation">
+<t>An identifier that is predictable within a given context allows for network activity correlation within that context.</t>
+
+<t>For example, a stable IPv6 Interface Identifier allows for network activity to be correlated within the context in which the Interface Identifier is stable <xref target="RFC7721"/>. A stable-per-network IPv6 Interface Identifier (as in <xref target="RFC7217"/>) allows for network activity correlation within a network, whereas a constant IPv6 Interface Identifier (that remains constant across networks) allows not only network activity correlation within the same network, but also across networks ("host tracking").
+</t>
+
+<t>Similarly, an implementation that generates TCP ISNs with a global counter could allow for fingerprinting and network activity correlation across networks, since an attacker could passively infer the identity of the victim based on the TCP ISNs employed for subsequent communication instances. Similarly, an implementation that generates predictable IPv6 Fragment Identification values could be subject to fingerprinting attacks (see e.g. <xref target="Bellovin2002"/>).
+</t>
+</section>
+
+<section title="Information Leakage" anchor="information-leakage">
+<t>Transient numeric identifiers that result in specific patterns can produce an information leakage to other communicating entities. For example, it is common to generate transient numeric identifiers with an algorithm such as:
+
+<figure align="center">
+<artwork align="center"><![CDATA[
+ID = offset(CONTEXT) + mono(CONTEXT);
+]]></artwork>
+<postamble></postamble>
+</figure>
+
+This generic expression generates identifiers by adding a monotonically-increasing function (e.g. linear) to a randomized offset. offset() is constant within a given context, whereas mono() produces a monotonically-increasing sequence for the given context. Identifiers generated with this expression will generally be predictable within CONTEXT. <!--Additionally, information associated with the increments will be "leaked" within CONTEXT_2. When both CONTEXT_1 and CONTEXT_2 are constant values, then the corresponding transient numeric identifiers become predictable in all contexts.-->
+
+<!--
+<list style="hanging">
+
+
+<t>
+      NOTE: If CONTEXT_1 is constant, and an attacker can sample ID values, the resulting identifiers may leak even more information. For example, if Fragment Identification values are generated
+      with the generic function above, CONTEXT_1 is constant, and mono() is a linear function, then the corresponding identifiers will leak the number of fragmented datagrams sent for CONTEXT_2.  If both CONTEXT_1 and CONTEXT_2 are constant, and mono() is a linear function, then Fragment Identification values will be generated with a global counter (initialized to offset()), and thus each generated Fragment Identification value will leak the number of fragmented datagrams transmitted by the node since it has been bootstrapped.
+</t>      
+      
+</list>
+-->
+</t>
+
+<t>The predictability of mono(), irrespective of the predictability of offset(), can leak information that may be of use to attackers. For example, a node that selects ephemeral port numbers as in:
+
+<figure align="center">
+<artwork align="center"><![CDATA[
+ephemeral_port = offset(Dest_IP) + mono()
+]]></artwork>
+<postamble></postamble>
+</figure>
+
+that is, with a per-destination offset, but a global mono() function (e.g., a global counter), will leak information about total number of outgoing connections that have been issued by the vulnerable implementation.</t>
+
+<t>Similarly, a node that generates Fragment Identification values as in:
+
+<figure align="center">
+<artwork align="center"><![CDATA[
+Frag_ID = offset(IP_src_addr, IP_dst_addr) + mono()
+]]></artwork>
+<postamble></postamble>
+</figure>
+
+will leak out information about the total number of fragmented packets that have been transmitted by the vulnerable implementation. The vulnerabilities described in <xref target="Sanfilippo1998a"/>, <xref target="Sanfilippo1998b"/>, and <xref target="Sanfilippo1999"/> are all associated with the use of a global mono() function (i.e., with a global and constant "context") -- particularly when it is a linear function (constant increments of 1).
+</t>
+
+<t>Predicting transient numeric identifiers can be of help for other types of attacks. For example, predictable TCP ISNs can open the door to trivial connection-reset and data injection attacks (see <xref target="injection-attacks"/>).
+</t>
+
+</section>
+
+
+<section title="Fingerprinting" anchor="fingerprinting"> 
+<t>Fingerprinting is the capability of an attacker to identify or re-identify a visiting user, user agent or device via configuration settings or other observable characteristics. Observable protocol objects and characteristics can be employed to identify/re-identify
+a variety of entities, ranging from the underlying hardware or Operating
+System (vendor, type and version), to the user itself (i.e. his/her
+identity). <xref target="EFF"/> illustrates web browser-based fingerprinting, but
+similar techniques can be applied at other layers and protocols, whether
+alternatively or in conjunction with it.</t>
+
+<t>
+Transient numeric identifiers are one of the observable protocol components that could be leveraged for fingerprinting purposes. That is, an attacker could sample transient numeric identifiers to infer the algorithm (and its associated parameters, if any) for generating such identifiers, possibly revealing the underlying Operating System (OS) vendor, type, and version. This information could possibly be further leveraged in conjunction with other fingerprinting techniques and sources.
+</t>
+
+<t>
+Evasion of protocol-stack fingerprinting can prove to be a very difficult task: most systems make use of a wide variety of protocols, each of which have a large number of parameters that can be set to arbitrary values or generated with a variety of algorithms with multiple parameters.
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+   General protocol-based fingerprinting is discussed in <xref target="RFC6973"/>,
+   along with guidelines to mitigate the associated  vulnerability.
+   <xref target="Fyodor1998"/> and <xref target="Fyodor2006"/> are classic references
+   on Operating System detection via TCP/IP stack fingerprinting.
+   Nmap <xref target="nmap"/> is probably the most popular tool for remote OS
+   identification via active TCP/IP stack fingerprinting. p0f <xref target="Zalewski2012"/>,
+   on the other hand, is a tool for performing remote OS detection via
+   passive TCP/IP stack fingerprinting. Finally, <xref target="TBIT"/> is a TCP
+   fingerprinting tool that aims at characterizing the behaviour of a
+   remote TCP peer based on active probes, and which has been widely
+   used in the research community.
+</t>
+</list>
+</t>
+
+<t>
+Algorithms that, from the perspective of an observer (e.g., the legitimate communicating peer), result in specific values or patterns, will allow for at least some level of fingerprinting. For example,
+the algorithm from <xref target="cat-3-alg"/> will typically allow fingerprinting within the context where the resulting identifiers are stable. Similarly, the algorithms from <xref target="cat-4-alg"/> will result in a monotonically-increasing sequences within a given context, thus allowing for at least some level of fingerprinting (when the other communicating entity can correlate different sampled identifiers as belonging to the same monotonically-increasing sequence).
+</t>
+
+<t>
+Thus, where possible, algorithms from <xref target="cat-1-alg"/> should be preferred over algorithms that result in specific values or patterns.
+</t>
+</section>
+
+
+<section title="Exploitation of the Semantics of Transient Numeric Identifiers" anchor="id-semantics"> 
+<t>Identifiers that are not semantically opaque tend to be more predictable than semantically-opaque identifiers. For example, a MAC address contains an OUI (Organizationally-Unique Identifier) which identifies the vendor that manufactured the corresponding network interface card. This can be leveraged by an attacker trying to "guess" MAC addresses, who has some knowledge about the possible NIC vendor.</t>
+<t><xref target="RFC7707"/> discusses a number of techniques to reduce the search space when performing IPv6 address-scanning attacks by leveraging the semantics of the IIDs produced by traditional SLAAC algorithms (eventually replaced by <xref target="RFC7217"/>) that embed MAC addresses in the IID of IPv6 addresses.
+</t>
+</section>
+
+<section title="Exploitation of Collisions of Transient Numeric Identifiers" anchor="id-collisions"> 
+<t>In many cases, the collision of transient network identifiers can have a hard failure severity (or result in a hard failure severity if an attacker can cause multiple collisions deterministically, one after another). For example, predictable Fragment Identification values open the door to Denial of Service (DoS) attacks (see e.g. <xref target="RFC5722"/>.).
+</t>
+</section>
+
+
+<section title="Exploitation of Predictable Transient Numeric Identifiers for Injection Attacks" anchor="injection-attacks"> 
+<t>Some protocols rely on "sequence numbers" for the validation of incoming packets. For example, TCP employs sequence numbers for reassembling TCP segments, while IPv4 and IPv6 employ Fragment Identification values for reassembling IPv4 and IPv6 fragments (respectively). Lacking built-in cryptographic mechanisms for validating packets, these protocols are therefore vulnerable to on-path data (see e.g. <xref target="Joncheray1995"/>) and/or control-information (see e.g. <xref target="RFC4953"/> and <xref target="RFC5927"/>) injection attacks. The extent to which these protocols may resist off-path (i.e. "blind") injection attacks depends on whether the associated "sequence numbers" are predictable, and effort required to successfully predict a valid "sequence number" (see e.g. <xref target="RFC4953"/> and <xref target="RFC5927"/>).
+</t>
+
+<t>We note that the use of unpredictable "sequence numbers" is a completely-ineffective mitigation for on-path injection attacks, and also a mostly-ineffective mitigation for off-path (i.e. "blind") injection attacks. However, many legacy protocols (such as TCP) do not natively incorporate cryptographic mitigations, but rather only as optional features (see e.g. <xref target="RFC5925"/>), if at all available. Additionally, ad-hoc use of cryptographic mitigations might not be sufficient to relieve a protocol implementation of generating appropriate transient numeric identifiers. For example, use of the Transport Layer Security (TLS) protocol <xref target="RFC8446"/> with TCP will protect the application protocol, but will not help to mitigate e.g. TCP-based connection-reset attacks (see e.g. <xref target="RFC4953"/>). Similarly, use of SEcure Neighbor Discovery (SEND) <xref target="RFC3971"/> will still imply reliance on the successful reassembly of IPv6 fragments in those cases where SEND packets do not fit into the link Maximum Transmission Unit (MTU) (see <xref target="RFC6980"/>).</t>
+
+
+</section>
+
+<section title="Cryptanalysis" anchor="crypto-analisis"> 
+<t>A number of algorithms discussed in this document (such as those described in <xref target="simple-hash"/> and <xref target="double-hash"/>) rely on PRFs. Implementations that employ weak PRFs or keys of inappropriate size can be subject to cryptanalysis, where an attacker can obtain the secret key employed for the PRF, predict numeric identifiers, etc. </t>
+
+<t>Furthermore, an implementation that overloads the semantics of the secret key can result in more trivial cryptanalysis, possibly resulting in the leakage of the value employed for the secret key.
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+<xref target="IPID-DEV"/> describes two vulnerable transient numeric ID generators that employ cryptographically-weak hash functions. Additionally, one of such implementations employs 32-bits of a kernel address as the secret key for a hash function, and therefore successful cryptanalysis leaks the aforementioned kernel address, allowing for Kernel Address Space Layout Randomization (KASLR) <xref target="KASLR"/> bypass. 
+</t>
+</list>
+
+</t>
+</section>
+</section>
+
+
+<section title="Vulnerability Assessment of Transient Numeric Identifiers" anchor="vuln-cats">
+<t>
+The following subsections analyze possible vulnerabilities associated with the algorithms described in <xref target="common-algorithms"/>.
+</t>
+
+<section title="Category #1: Uniqueness (soft failure)" anchor="cat-1-vuln">
+<t>Possible vulnerabilities associated with the algorithms from <xref target="cat-1-alg"/> include:
+<list style="symbols">
+<t>Use of flawed PRNGs (please see e.g. <xref target="Zalewski2001"/>, <xref target="Zalewski2002"/>, <xref target="Klein2007"/> and <xref target="CVEs"/>).</t>
+<t>Inadvertently affecting the distribution of an otherwise suitable PRNG (please see e.g. <xref target="Romailler2020"/>).</t>
+</list>
+</t>
+
+
+<t>Where available, CSPRNGs should be preferred over regular PRNGs such as e.g. POSIX random(3) implementations. In scenarios where a CSPRNG is not readily available, a security and privacy assessment of employing a regular PRNG should be performed, supporting the implementation decision.
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+Please see <xref target="RFC4086"/> regarding randomness requirements for security. <xref target="Aumasson2018"/>, <xref target="Press1992"/>, and <xref target="Knuth1983"/>, discuss theoretical and practical aspects of random numbers generation, and provide guidance on how to evaluate PRNGs.</t>
+</list>
+</t>
+
+
+
+<t>When employing a PRNG, many implementations "adapt" the length of its output with a modulo operator (e.g., C language's "%"), possibly changing the distribution of the output of the PRNG.</t>
+
+<t>
+For example, consider an implementation that employs the following code:
+
+<figure align="center">
+<artwork align="center"><![CDATA[
+id = random() % 50000;
+]]></artwork>
+<postamble></postamble>
+</figure>
+
+This example implementation means to obtain a transient numeric identifier in the range 0-49999. If random() produces e.g. a pseudorandom number of 16 bits (with uniform distribution), the selected transient numeric identifier will have a non-uniform distribution with the numbers in the range 0-15535 having double-frequency than the numbers in the range 15536-49999.
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+For example, in our sample code both an output of 10 and output of 50010 from the random() function will result in an 'id' value of 10.
+</t>
+</list>
+
+This effect is reduced if the PRNG produces an output that is much longer than the length implied by the modulo operation. We note that to preserve a uniform distribution, the rejection sampling technique <xref target="Romailler2020"/> can be used.
+</t>
+
+
+
+<t>
+Use of algorithms other than PRNGs for generating identifiers of this category is discouraged.
+</t>
+
+</section>
+
+
+
+<section title="Category #2: Uniqueness (hard failure)" anchor="cat-2-vuln">
+<t>As noted in <xref target="cat-2-alg"/>, this category can employ the same algorithms as Category #4, since a monotonically-increasing sequence tends to minimize the transient numeric identifier reuse frequency. Therefore, the vulnerability analysis in <xref target="cat-4-vuln"/> also applies to this category.
+</t>
+
+<t>Additionally, as noted in <xref target="cat-2-alg"/>, some transient numeric identifiers of this category might be able to use the algorithms from  <xref target="cat-1-alg"/>, in which case the same considerations as in <xref target="cat-1-vuln"/> would apply.
+</t>
+</section>
+
+<section title="Category #3: Uniqueness, stable within context (soft failure)" anchor="cat-3-vuln">
+<!--
+<t>There are three main vulnerabilities that may be associated with identifiers of this category:
+<list style="numbers">
+<t>Use algorithms or sources that result in predictable identifiers</t>
+<t>Use cryptographically-weak hash functions, or inappropriate secret key sizes that allow for cryptanalysis</t>
+<t>Employing the same identifier across contexts in which stability is not required (overloading the numeric identifier)</t>
+</list>
+</t>
+-->
+<t>Possible vulnerabilities associated with the algorithms from <xref target="cat-3-alg"/> are:
+<list style="numbers">
+<t>Use of weak PRFs, or inappropriate secret keys (whether inappropriate selection or inappropriate size) could allow for cryptanalysis, which could eventually be exploited by an attacker to predict future transient numeric identifiers.</t>
+<t>Since the algorithm generates a unique and stable identifier within a specified context, it may allow for network activity correlation and fingerprinting within the specified context.</t>
+</list>
+</t>
+
+
+</section>
+
+<section title="Category #4: Uniqueness, monotonically increasing within context (hard failure)" anchor="cat-4-vuln">
+<t>The algorithm described in <xref target="per-context-counter"/> for generating identifiers of Category #4 will result in an identifiable pattern (i.e. a monotonically-increasing sequence) for the transient numeric identifiers generated for each CONTEXT, and thus will allow for fingerprinting and network activity correlation within each CONTEXT.
+</t>
+
+
+<t>On the other hand, a simple way to generalize and analyze the algorithms described in <xref target="simple-hash"/> and <xref target="double-hash"/> for generating identifiers of Category #4, is as follows:
+    <figure>
+    <artwork>
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    retry = id_range;
+    id_inc = increment() % id_range;
+
+    do {
+        update_mono(CONTEXT, id_inc);
+        next_id = min_id + (offset(CONTEXT) + \
+                            mono(CONTEXT)) % id_range;
+
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+        retry = retry - id_inc;
+
+    } while (retry > 0);
+
+    return ERROR;
+
+    </artwork>
+    </figure>
+</t>
+
+<t>
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+increment() returns a small integer that is employed to generate a monotonically-increasing function. Most implementations employ a constant value for "increment()" (usually 1). The value returned by increment() must be much smaller than the value computed for "id_range".
+</t>
+<t>
+update_mono(CONTEXT, id_inc) increments the counter corresponding to CONTEXT by "id_inc".
+</t>
+<t>
+mono(CONTEXT) reads the counter corresponding to CONTEXT.
+</t>
+</list>
+</t>
+
+<t>Essentially, an identifier (next_id) is generated by adding a monotonically-increasing function (mono()) to an offset value, unknown to the attacker and stable for given context (CONTEXT).</t>
+
+<t>The following aspects of the algorithm should be considered:
+
+
+<list style="symbols">
+<t>For the most part, it is the offset() function that results in identifiers that are unpredictable by an off-patch attacker. While the resulting sequence is known to be monotonically-increasing, the use of a randomized offset value makes the resulting values unknown to the attacker.</t>
+<t>The most straightforward "stateless" implementation of offset() is with a PRF that takes the values that identify the context and a "secret_key" (not shown in the figure above) as arguments.
+</t>
+
+<t>
+One possible implementation of mono() would be to have mono() internally employ a single counter (as in the algorithm from <xref target="simple-hash"/>), or map the increments for different contexts into a number of counters/buckets, such that the number of counters that need to be maintained in memory is reduced (as in the algorithm from algorithm in <xref target="double-hash"/>).
+</t>
+<!--
+<t>
+One possible implementation approach for mono() is to maintain per-context counters, initialized to random values (as the algorithm from <xref target="per-context-counter"/>). When a new identifier is to be selected, the corresponding counter is looked-up (based on the context) and incremented, to obtain a new transient numeric identifier. For example, the algorithm in <xref target="per-context-counter"/> could be such an implementation of mono().  Another possible implementation of mono() would be to have mono() internally employ a single counter (as in the algorithm from <xref target="simple-hash"/>), or map the increments for different contexts into a number of counters/buckets, such that the number of counters that need to be maintained in memory is reduced (as in the algorithm from algorithm in <xref target="double-hash"/>).
+</t>
+-->
+<t>In all cases, a monotonically increasing function is implemented by incrementing the previous value of a counter by increment() units. In the most trivial case, increment() could return the constant "1". But increment() could also be implemented to return small random integers such that the increments are unpredictable (see Appendix A of <xref target="RFC7739"/>). This represents a trade-off between the unpredictability of the resulting transient numeric IDs and the transient numeric ID reuse frequency.
+</t>
+</list>
+</t>
+
+<t>Considering the generic algorithm illustrated above, we can identify the following possible vulnerabilities:
+<list style="symbols">
+<t>Since the algorithms for this category are similar to those of <xref target="cat-3-vuln"/>, with the addition of a monotonically-increasing function, all the issues discussed in <xref target="cat-3-vuln"/> ("Category #3: Uniqueness, stable within context (soft failure)") also apply to this case.
+</t>
+
+<t>mono() can be correlated to the number of identifiers generated for a given context (CONTEXT). Thus, if mono() spans more than the necessary context, the "increments" could be leaked to other parties, thus disclosing information about the number of identifiers that have been generated by the algorithm for all contexts. This is information disclosure becomes more evident when an implementation employs a constant increment of 1. For example, an implementation where mono() is actually a single global counter, will unnecessarily leak information the number of identifiers that have been generated by the algorithm (globally, for all contexts). <xref target="Fyodor2003"/> is one example of how such information leakages can be exploited. We note that limiting the span of the increments space will require a larger number of counters to be stored in memory (i.e., a larger value for the TABLE_LENGTH parameter of the algorithm in <xref target="double-hash"/>).
+</t>
+
+
+<t>Transient numeric identifiers generated with the algorithms described in <xref target="simple-hash"/> and <xref target="double-hash"/> will normally allow for fingerprinting within CONTEXT since, for such context, the resulting identifiers will have an identifiable pattern (i.e. a monotonically-increasing sequence).
+</t>
+
+
+</list>
+</t>
+</section>
+</section>
+
+
+
+
+	<section title="IANA Considerations" anchor="iana-considerations">
+<t>This document has no IANA actions.</t>
+</section>
+
+
+
+    <section title="Security Considerations">
+
+	<t>The entire document is about the security and privacy implications of transient numeric identifiers. <xref target="I-D.gont-numeric-ids-sec-considerations"/> recommends that protocol specifications specify the interoperability requirements of their transient numeric identifiers, perform a vulnerability assessment of their transient numeric identifiers, and suggest an algorithm for generating each of their transient numeric identifiers. This document analyzes possible algorithms (and their implications) that could be employed to comply with the interoperability properties of most common categories of transient numeric identifiers, while minimizing the associated negative security and privacy implications.</t>
+    </section>
+
+    <section title="Acknowledgements">
+
+<t>The authors would like to thank (in alphabetical order) Bernard Aboba, Jean-Philippe Aumasson, Steven Bellovin, Luis Leon Cardenas Graide, Spencer Dawkins, Theo de Raadt, Guillermo Gont, Joseph Lorenzo Hall, Gre Norcie, Colin Perkins, Vincent Roca, Shivan Sahib, Rich Salz, Martin Thomson, and Michael Tuexen, for providing valuable comments on earlier versions of this document.</t>
+
+<t>The authors would like to thank Shivan Sahib and Christopher Wood, for their guidance during the publication process of this document.</t>
+
+<t>The authors would like to thank Jean-Philippe Aumasson and Mathew D. Green (John Hopkins University) for kindly answering a number of questions.</t>
+
+ <t>The authors would like to thank Diego Armando Maradona for his magic and inspiration.</t> 
+    </section>
+
+
+  </middle>
+
+  <back>
+  <references title='Normative References'>
+  
+  <!--
+	<?rfc include="reference.RFC.2119" ?>
+	<?rfc include="reference.RFC.8174" ?>
+-->
+
+<!-- TCP sequence numbers -->
+	<?rfc include="reference.RFC.0793" ?>
+	<?rfc include="reference.RFC.6528" ?> <!-- TCP SEQ randomization -->
+
+<!-- Port Randomization -->
+	<?rfc include="reference.RFC.6056" ?> 
+
+
+<!-- TCP-AO -->
+	<?rfc include="reference.RFC.5925" ?> 
+
+
+<!-- IPv4 -->
+	<?rfc include="reference.RFC.0791" ?>
+
+
+<!-- IPv6 -->
+	<?rfc include="reference.RFC.2460" ?>
+	<?rfc include="reference.RFC.8200" ?>
+	<?rfc include="reference.RFC.4086" ?>
+	<?rfc include="reference.RFC.4291" ?>
+	<?rfc include="reference.RFC.8981" ?>
+	<?rfc include="reference.RFC.4862" ?>
+	<?rfc include="reference.RFC.5722" ?>
+	<?rfc include="reference.RFC.7217" ?>
+	<?rfc include="reference.RFC.8064" ?>
+
+
+<!-- TCP timestamps -->
+	<?rfc include="reference.RFC.6191" ?>
+	<?rfc include="reference.RFC.7323" ?>
+
+
+
+<!-- MD5 -->
+
+	<?rfc include="reference.RFC.1321" ?>
+	<?rfc include="reference.RFC.6151" ?>
+	
+
+<!-- DNS -->
+
+	<?rfc include="reference.RFC.1035" ?>
+
+  </references>
+
+  <references title='Informative References'>
+
+<!-- Timing attacks -->
+
+<!--
+	<reference anchor="Mayer2014" target="https://www.blackhat.com/docs/us-14/materials/us-14-Mayer-Time-Trial-Racing-Towards-Practical-Timing-Attacks-WP.pdf">
+		<front>
+			<title>Time Trial: Racing Towards Practical Remote Timing Attacks</title>
+			<author initials="D." surname="Mayer" fullname="Daniel Mayer">
+				<organization>Matasano</organization>
+			</author>
+			<author initials="J." surname="Sandin" fullname="Joel Sandin">
+				<organization>Matasano</organization>
+			</author>
+			<date year="2014"/>
+		</front>
+		<seriesInfo name="BlackHat USA 2014 Conference," value="August 6-7"/>
+	</reference>
+-->
+
+<!--	
+	<reference anchor="Crosby2009" target="https://www.cs.rice.edu/~dwallach/pub/crosby-timing2009.pdf">
+		<front>
+			<title>Opportunities and Limits of Remote Timing Attacks</title>
+			<author initials="S. A." surname="Crosby" fullname="Scott A. Crosby">
+				<organization>Rice University</organization>
+			</author>
+			<author initials="D. S." surname="Wallach" fullname="Dan S. Wallach">
+				<organization>Rice University</organization>
+			</author>
+			<author initials="R. H." surname="Riedi" fullname="Rudolf H. Riedi">
+				<organization>Rice University</organization>
+			</author>
+			<date year="2009"/>
+		</front>
+		<seriesInfo name="ACM Trans. Inf. Syst. Secur. 12, 3, " value="Article 17 "/>
+	</reference>	
+-->
+
+	<reference anchor="KASLR" target="https://pax.grsecurity.net/docs/aslr.txt">
+		<front>
+			<title>Address Space Layout Randomization</title>
+			<author initials="" surname="PaX Team" fullname="The Pax Team">
+				<organization></organization>
+			</author>
+
+			<date/>
+
+		</front>
+<!--
+		<seriesInfo name="" value="Federal Information Processing Standards Publication 180-4"/>
+-->
+	</reference>
+
+
+	<reference anchor="IANA-PROT" target="https://www.iana.org/protocols">
+		<front>
+			<title>Protocol Registries</title>
+			<author initials="" surname="IANA" fullname="IANA">
+				<organization></organization>
+			</author>
+
+			<date/>
+
+		</front>
+<!--
+		<seriesInfo name="" value="Federal Information Processing Standards Publication 180-4"/>
+-->
+	</reference>
+
+
+<!-- Fingerprinting -->
+
+	<?rfc include="reference.RFC.6973" ?>
+	
+	<reference anchor="Fyodor1998" target="http://www.phrack.org/archives/issues/54/9.txt">
+		<front>
+			<title>Remote OS Detection via TCP/IP Stack Fingerprinting</title>
+			<author initials="" surname="Fyodor" fullname="Fyodor">
+				<organization></organization>
+			</author>
+			<date year="1998"/>
+		</front>
+		<seriesInfo name="" value="Phrack Magazine, Volume 9, Issue 54"/>
+	</reference>
+	
+	
+	<reference anchor="Fyodor2006" target="https://nmap.org/book/osdetect.html">
+		<front>
+			<title>Chapter 8. Remote OS Detection</title>
+			<author initials="G." surname="Lyon" fullname="Gordon Lyon">
+				<organization></organization>
+			</author>
+			<date year="2006"/>
+		</front>
+
+	</reference>
+	
+	<reference anchor="nmap" target="https://www.insecure.org/nmap">
+		<front>
+			<title>Nmap: Free Security Scanner For Network Exploration and Audit</title>
+			<author>
+				<organization>nmap</organization>
+			</author>
+			<date year="2020"/>
+		</front>
+
+	</reference>	
+
+
+	<reference anchor="EFF" target="https://coveryourtracks.eff.org/">
+		<front>
+			<title>Cover your tracks: See how trackers view your browser</title>
+			<author initials="" surname="EFF" fullname="EFF">
+				<organization></organization>
+			</author>
+			<date year="2020"/>
+		</front>
+
+	</reference>	
+
+
+<reference anchor="Schuba1993" target="http://ftp.cerias.purdue.edu/pub/papers/christoph-schuba/schuba-DNS-msthesis.pdf">
+		<front>
+			<title>ADDRESSING WEAKNESSES IN THE DOMAIN NAME SYSTEM PROTOCOL</title>
+			<author initials="C." surname="Schuba" fullname="Christoph Schuba">
+				<organization></organization>
+			</author>
+			<date year="1993"/>
+		</front>
+</reference>
+
+
+	<reference anchor="TBIT" target="https://www.icir.org/tbit/">
+		<front>
+			<title>TBIT, the TCP Behavior Inference Tool</title>
+			<author initials="" surname="TBIT" fullname="TBIT">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+
+	</reference>	
+
+
+
+	<reference anchor="C11">
+		<front>
+			<title>Information technology - Programming
+languages - C</title>
+			<author initials="" surname="ISO/IEC" fullname="ISO/IEC">
+				<organization></organization>
+			</author>
+			<date year="2011"/>
+		</front>
+		<seriesInfo name="" value="ISO/IEC 9899:2011"/>
+	</reference>
+	
+	<reference anchor="POSIX">
+		<front>
+			<title>IEEE Standard for Information Technology -- Portable Operating System Interface (POSIX)</title>
+			<author initials="" surname="IEEE" fullname="IEEE">
+				<organization></organization>
+			</author>
+			<date year="2017"/>
+		</front>
+		<seriesInfo name="" value="IEEE Std 1003.1-2017"/>
+	</reference>
+	
+	<reference anchor="ARC4RANDOM" target="https://man.openbsd.org/arc4random">
+		<front>
+			<title>arc4random(3)</title>
+			<author initials="" surname="OpenBSD" fullname="OpenBSD">
+				<organization></organization>
+			</author>
+			<date year="Library Functions Manual, 2022"/>
+		</front>
+	
+	</reference>
+
+	<reference anchor="GETENTROPY" target="https://man7.org/linux/man-pages/man3/getentropy.3.html">
+		<front>
+			<title>getentropy(3)</title>
+			<author initials="" surname="Linux" fullname="Linux">
+				<organization></organization>
+			</author>
+			<date year="Linux Programmer's Manual, 2022"/>
+		</front>
+	
+	</reference>
+		
+	<reference anchor="CVEs" target="https://www.gont.com.ar/miscellanea/prng-cves/">
+		<front>
+			<title>Vulnerability Advisories for Pseudo Random Number Generators</title>
+			<author initials="" surname="NVD" fullname="NVD">
+				<organization></organization>
+			</author>
+			<date year="2022"/>
+		</front>
+	</reference>
+	
+	<reference anchor="Zalewski2012" target="https://lcamtuf.coredump.cx/p0f.shtml">
+		<front>
+			<title>p0f v3 (version 3.09b)</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2012"/>
+		</front>
+
+	</reference>	
+
+
+<!-- HMAC -->
+	<?rfc include="reference.RFC.2104" ?>
+
+<!-- md5 -->
+<!--	<?rfc include="reference.RFC.6151" ?> -->
+
+
+<!-- flow label -->
+	<?rfc include="reference.RFC.7098" ?>
+<!-- MD5
+	<?rfc include="reference.RFC.1321" ?>
+-->
+
+
+<!-- Pervasive Monitoring -->
+	<?rfc include="reference.RFC.7258" ?>
+
+<!-- TCP ISNs -->
+<!--
+	<?rfc include="reference.RFC.1948" ?> 
+-->
+	<reference anchor="CPNI-TCP" target="https://www.gont.com.ar/papers/tn-03-09-security-assessment-TCP.pdf">
+		<front>
+			<title>Security Assessment of the Transmission Control Protocol (TCP)</title>
+			<author initials="F." surname="Gont" fullname= "Fernando Gont">
+				<organization></organization>
+			</author>
+			<date year="2009"/>
+		</front>
+		<seriesInfo name="" value="United Kingdom's Centre for the Protection of National Infrastructure (CPNI) Technical Report"/>
+	</reference>
+
+
+	<reference anchor="Zalewski2001" target="https://lcamtuf.coredump.cx/oldtcp/tcpseq.html">
+		<front>
+			<title>Strange Attractors and TCP/IP Sequence Number Analysis</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+
+	<reference anchor="Zalewski2002" target="https://lcamtuf.coredump.cx/newtcp/">
+		<front>
+			<title>Strange Attractors and TCP/IP Sequence Number Analysis - One Year Later</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+
+
+<!--
+	<reference anchor="Bellovin1989" target="https://www.cs.columbia.edu/~smb/papers/ipext.pdf">
+		<front>
+			<title>Security Problems in the TCP/IP Protocol Suite</title>
+			<author initials="S." surname="Bellovin" fullname="Bellovin">
+				<organization></organization>
+			</author>
+			<date year="Computer Communications Review, vol. 19, no. 2, pp. 32-48, 1989"/>
+		</front>
+	</reference>
+-->
+
+	<reference anchor="Joncheray1995" target="https://www.usenix.org/legacy/publications/library/proceedings/security95/full_papers/joncheray.pdf">
+		<front>
+			<title>A Simple Active Attack Against TCP</title>
+			<author initials="L." surname="Joncheray" fullname="L. Joncheray">
+				<organization></organization>
+			</author>
+			<date year="Proc. Fifth Usenix UNIX Security Symposium, 1995"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Morris1985" target="https://pdos.csail.mit.edu/~rtm/papers/117.pdf">
+		<front>
+			<title>A Weakness in the 4.2BSD UNIX TCP/IP Software</title>
+			<author initials="R." surname="Morris" fullname="Robert Morris">
+				<organization></organization>
+			</author>
+			<date year="1985"/>
+		</front>
+		<seriesInfo name="CSTR 117," value="AT&amp;T Bell Laboratories, Murray Hill, NJ"/>
+	</reference>
+
+
+<!--
+	<reference anchor="USCERT2001" target="https://www.kb.cert.org/vuls/id/498440">
+		<front>
+			<title>US-CERT Vulnerability Note VU#498440: Multiple TCP/IP implementations may use statistically predictable initial sequence numbers
+</title>
+			<author initials="" surname="US-CERT" fullname= "US-CERT">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+-->
+
+<!--
+	<reference anchor="CERT2001" target="https://www.cert.org/advisories/CA-2001-09.html">
+		<front>
+			<title>CERT Advisory CA-2001-09: Statistical Weaknesses in TCP/IP Initial Sequence Numbers
+</title>
+			<author initials="" surname="CERT" fullname= "CERT">
+				<organization></organization>
+			</author>
+			<date year="2001"/>
+		</front>
+	</reference>
+-->
+
+	<reference anchor="Shimomura1995" target="https://www.gont.com.ar/docs/post-shimomura-usenet.txt">
+		<front>
+			<title>Technical details of the attack described by Markoff in NYT</title>
+			<author initials="T." surname="Shimomura" fullname= "Tsutomu Shimomura">
+				<organization></organization>
+			</author>
+			<date year="1995"/>
+
+		</front>
+		<seriesInfo name="Message posted in USENET's comp.security.misc newsgroup" value=" Message-ID: &lt;3g5gkl$5j1@ariel.sdsc.edu&gt;"/>
+	</reference>
+
+
+
+
+<!-- ICMP attacks -->
+
+	<?rfc include="reference.RFC.5927" ?>
+
+<!-- TCP based attacks -->
+	<?rfc include="reference.RFC.4953" ?>
+
+
+<!-- TLS -->
+	<?rfc include="reference.RFC.8446" ?>
+	
+
+<!-- SEND -->
+	<?rfc include="reference.RFC.3971" ?>
+
+
+<!-- Frag con ND -->
+	<?rfc include="reference.RFC.6980" ?>
+	
+
+<!-- IPv6 Flow Label -->
+<!--
+	<?rfc include="reference.I-D.gont-6man-flowlabel-security" ?>
+-->
+
+
+<!-- Fragment ID -->
+<!--
+	<?rfc include="reference.I-D.ietf-6man-predictable-fragment-id" ?>
+-->
+	<?rfc include="reference.RFC.7739" ?>
+
+	<?rfc include="reference.RFC.4963" ?> <!-- IPv4 Reassembly Errors at High Data Rates -->
+
+
+	<!-- IPv4 Security Assessment -->
+	<?rfc include="reference.RFC.6274" ?>
+
+	<reference anchor="Press1992">
+		<front>
+			<title>Numerical Recipes in C: The Art of Scientific Computing</title>
+			<author initials="W. H." surname="Press" fullname="William H. Press">
+				<organization></organization>
+			</author>
+
+
+
+			<author initials="S. A." surname="Teukolsky" fullname="Saul A. Teukolsky">
+				<organization></organization>
+			</author>
+
+			<author initials="W. T." surname="Vetterling" fullname="William  T.  Vetterling">
+				<organization></organization>
+			</author>
+
+			<author initials="B. P." surname="Flannery" fullname="Brian P. Flannery">
+				<organization></organization>
+			</author>
+						
+			<date year="2nd ed. ISBN 0-521-43108-5. Cambridge University Press, 1992"/>
+		</front>
+	</reference>
+
+	<reference anchor="Romailler2020" target="https://research.kudelskisecurity.com/2020/07/28/the-definitive-guide-to-modulo-bias-and-how-to-avoid-it/">
+		<front>
+			<title>THE DEFINITIVE GUIDE TO "MODULO BIAS AND HOW TO AVOID IT"!</title>
+			<author initials="Y." surname="Romailler" fullname="Yolan Romailler">
+				<organization></organization>
+			</author>
+			<date year="Kudelski Security Research, 2020"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Aumasson2018">
+		<front>
+			<title>Serious Cryptography: A Practical Introduction to Modern Encryption</title>
+			<author initials="J.P." surname="Aumasson" fullname="Jean-Philippe Aumasson">
+				<organization></organization>
+			</author>
+			<date year="ISBN-10: 1-59327-826-8, No Starch Press, Inc., 2018"/>
+		</front>
+	</reference>
+		
+	<reference anchor="Knuth1983">
+		<front>
+			<title>The Art of Computer Programming</title>
+			<author initials="D." surname="Knuth" fullname="Donald Knuth">
+				<organization></organization>
+			</author>
+			<date year="volume 2 (Seminumerical Algorithms), 2nd ed. Reading, Massachusetts: Addison-Wesley Publishing Company, 1981"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Bellovin1989" target="https://www.cs.columbia.edu/~smb/papers/ipext.pdf">
+		<front>
+			<title>Security Problems in the TCP/IP Protocol Suite</title>
+			<author initials="S." surname="Bellovin" fullname="Bellovin">
+				<organization></organization>
+			</author>
+			<date year="Computer Communications Review, vol. 19, no. 2, pp. 32-48, 1989"/>
+		</front>
+	</reference>
+	
+	
+	<reference anchor="Bellovin2002" target="https://www.cs.columbia.edu/~smb/papers/fnat.pdf">
+		<front>
+			<title>A Technique for Counting NATted Hosts</title>
+			<author initials="S. M." surname="Bellovin" fullname= "Bellovin, S. M.">
+				<organization></organization>
+			</author>
+			<date year="2002"/>
+		</front>
+		<seriesInfo name="IMW'02" value="Nov. 6-8, 2002, Marseille, France"/>
+	</reference>
+
+
+	<reference anchor="Fyodor2003" target="https://nmap.org/presentations/CanSecWest03/CD_Content/idlescan_paper/idlescan.html">
+		<front>
+			<title>Idle scanning and related IP ID games</title>
+			<author initials="" surname="Fyodor" fullname= "Fyodor">
+				<organization></organization>
+			</author>
+			<date year="2003"/>
+		</front>
+	</reference>
+
+
+	<reference anchor="Sanfilippo1998a" target="http://seclists.org/bugtraq/1998/Dec/48">
+		<front>
+			<title>about the ip header id</title>
+			<author initials="S." surname="Sanfilippo" fullname="S. Sanfilippo">
+				<organization></organization>
+			</author>
+			<date/>
+		</front>
+		<seriesInfo name="Post to Bugtraq mailing-list," value="Mon Dec 14 1998" />
+	</reference>
+
+	<reference anchor="Sanfilippo1998b" target="https://github.com/antirez/hping/raw/master/docs/SPOOFED_SCAN.txt">
+		<front>
+			<title>Idle scan</title>
+			<author initials="S." surname="Sanfilippo" fullname="S. Sanfilippo">
+				<organization></organization>
+			</author>
+			<date year="1998"/>
+		</front>
+		<seriesInfo name="Post to Bugtraq" value="mailing-list" />
+	</reference>
+
+	<reference anchor="Sanfilippo1999" target="https://github.com/antirez/hping/raw/master/docs/MORE-FUN-WITH-IPID">
+		<front>
+			<title>more ip id</title>
+			<author initials="S." surname="Sanfilippo" fullname="S. Sanfilippo">
+				<organization></organization>
+			</author>
+			<date year="1999"/>
+		</front>
+		<seriesInfo name="Post to Bugtraq" value="mailing-list" />
+	</reference>
+
+	<reference anchor="Silbersack2005" target="https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.4542&amp;rep=rep1&amp;type=pdf">
+		<front>
+			<title>Improving TCP/IP security through randomization without sacrificing interoperability</title>
+			<author initials="M.J." surname="Silbersack" fullname="Michael James Silbersack">
+				<organization>The FreeBSD Project</organization>
+			</author>
+			<date year="2005"/>
+		</front>
+		<seriesInfo name="EuroBSDCon 2005" value="Conference"/>
+	</reference>
+
+<!--
+	<reference anchor="Zalewski2003" target="http://lcamtuf.coredump.cx/ipfrag.txt">
+		<front>
+			<title>A new TCP/IP blind data injection technique?</title>
+			<author initials="M." surname="Zalewski" fullname="M. Zalewski">
+				<organization></organization>
+			</author>
+			<date year="2003"/>
+		</front>
+	</reference>
+-->
+
+	<reference anchor="Klein2007" target="https://dl.packetstormsecurity.net/papers/attack/OpenBSD_DNS_Cache_Poisoning_and_Multiple_OS_Predictable_IP_ID_Vulnerability.pdf">
+		<front>
+			<title>OpenBSD DNS Cache Poisoning and Multiple O/S Predictable IP ID Vulnerability</title>
+			<author initials="A." surname="Klein" fullname="Amit Klein">
+				<organization></organization>
+			</author>
+			<date year="2007"/>
+		</front>
+	
+	</reference>
+
+
+	<reference anchor="IPID-DEV" target="https://arxiv.org/pdf/1906.10478.pdf">
+		<front>
+			<title>From IP ID to Device ID and KASLR Bypass (Extended Version)</title>
+
+
+			<author initials="A." surname="Klein" fullname="Amit Klein">
+				<organization></organization>
+			</author>
+
+			<author initials="B." surname="Pinkas" fullname="Benny Pinkas">
+				<organization></organization>
+			</author>
+			<date year="2019" month="June"/>
+		</front>
+<!--
+		<seriesInfo name="Journal of Research of the National Institute of Standards and Technology" value="Volume 121" />
+-->
+	</reference>
+
+<!--
+	<reference anchor="Gont2011">
+		<front>
+			<title>Hacking IPv6 Networks (training course)</title>
+			<author initials="F." surname="Gont" fullname="Fernando Gont">
+				<organization></organization>
+			</author>
+			<date month="June" year="2011"/>
+		</front>
+			<seriesInfo name="Hack In Paris 2011 Conference" value="Paris, France"/>	
+	</reference>
+-->
+
+
+<!--
+	<reference anchor="Gont2012">
+		<front>
+			<title>Recent Advances in IPv6 Security</title>
+			<author initials="F." surname="Gont" fullname="Fernando Gont">
+				<organization></organization>
+			</author>
+			<date month="May" year="2012"/>	
+		</front>
+			<seriesInfo name="BSDCan 2012 Conference" value="Ottawa, Canada. May 11-12, 2012"/>	
+	</reference>
+-->
+
+
+
+
+
+<!-- IPv6 addresses -->
+
+	<?rfc include="reference.I-D.irtf-pearg-numeric-ids-history" ?>
+	<?rfc include="reference.I-D.gont-numeric-ids-sec-considerations" ?>
+
+<!--
+	<?rfc include="reference.I-D.ietf-6man-default-iids" ?>
+-->
+
+	<?rfc include="reference.RFC.7721" ?>
+	<?rfc include="reference.RFC.7707" ?>
+
+
+<!-- CSPRNG --> 
+	<?rfc include="reference.RFC.8937" ?>
+	
+	<reference anchor="TCPT-uptime" target="https://securiteam.com/securitynews/5np0c153pi/">
+		<front>
+			<title>TCP Timestamping - Obtaining System Uptime Remotely</title>
+			<author initials="B." surname="McDanel" fullname="B. McDanel">
+				<organization>Securiteam</organization>
+			</author>
+			<date month="March" day="14" year="2001"/>
+		</front>
+	
+	</reference>
+
+
+<!-- SipHash OLD
+	<reference anchor="SipHash" target="https://www.aumasson.jp/siphash/siphash.pdf">
+		<front>
+			<title>SipHash: a fast short-input PRF</title>
+			<author initials="J. P." surname="Aumasson" fullname="Jean-Philippe Aumasson">
+				<organization>NAGRA</organization>
+			</author>
+			<author initials="D. J." surname="Bernstein" fullname="Daniel J. Bernstein">
+				<organization>University of Illinois at Chicago</organization>
+			</author>
+			<date year="2012"/>
+		</front>
+		<seriesInfo name="" value="Indocrypt 2012. 13th International Conference on Cryptology. December 9-12, 2012"/>
+	</reference>
+-->	
+
+	<reference anchor="SipHash" target="https://github.com/veorq/SipHash">
+		<front>
+			<title>SipHash: a fast short-input PRF</title>
+			<author initials="J. P." surname="Aumasson" fullname="Jean-Philippe Aumasson">
+				<organization>NAGRA</organization>
+			</author>
+			<author initials="D. J." surname="Bernstein" fullname="Daniel J. Bernstein">
+				<organization>University of Illinois at Chicago</organization>
+			</author>
+			<date year="2012"/>
+		</front>
+	</reference>
+	
+	<reference anchor="BLAKE3" target="https://blake3.io/">
+		<front>
+			<title>BLAKE3: one function, fast everywhere</title>
+			<author initials="J." surname="O'Connor" fullname="Jack O'Connor">
+				<organization></organization>
+			</author>
+			
+			<author initials="J. P." surname="Aumasson" fullname="Jean-Philippe Aumasson">
+				<organization>NAGRA</organization>
+			</author>
+
+			<author initials="S." surname="Neves" fullname="Samuel Neves">
+				<organization></organization>
+			</author>			
+
+			<author initials="Z." surname="Wilcox-O'Hearn" fullname="Zooko Wilcox-O'Hearn">
+				<organization></organization>
+			</author>
+	
+
+			<date year="2020"/>
+		</front>
+
+	</reference>
+	
+	<reference anchor="FIPS-SHS" target="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf">
+		<front>
+			<title>Secure Hash Standard (SHS)</title>
+			<author>
+				<organization>NIST</organization>
+			</author>
+			<date month="August" year="2015"/>
+		</front>
+		<seriesInfo name="" value="Federal Information Processing Standards Publication 180-4"/>
+	</reference>
+
+<!-- HMAC -->
+
+<!--
+	<reference anchor="FIPS-HMAC" target="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.198-1.pdf">
+		<front>
+			<title>The Keyed-Hash Message Authentication Code (HMAC))</title>
+			
+			<author>
+				<organization>NIST</organization>
+			</author>
+			<date month="July" year="2008"/>
+		</front>
+		<seriesInfo name="" value="Federal Information Processing Standards Publication 198-1"/>
+	</reference>
+-->
+
+
+</references>
+
+<section title="Algorithms and Techniques with Known Issues" anchor="fawed-algorithms">
+
+<t>The following subsections discuss algorithms and techniques with known negative security and privacy implications.
+
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+As discussed in <xref target="intro"/>, the use of cryptographic techniques might allow for the safe use of some of these algorithms and techniques. However, this should be evaluated on a case by case basis.
+</t>
+</list>
+</t>
+
+
+
+
+<section title="Predictable Linear Identifiers Algorithm" anchor="trad_selection">
+<t>One of the most trivial ways to achieve uniqueness with a low identifier reuse frequency is to produce a linear sequence. This type of algorithm has been employed in the past to generate identifiers of Categories #1, #2, and #4 (please see <xref target="categorizing"/> for an analysis of these categories). <!-- This obviously assumes that each identifier will be used for a similar period of time.--></t>
+
+<t>
+For example, the following algorithm has been employed (see e.g. <xref target="Morris1985"/>, <xref target="Shimomura1995"/>, <xref target="Silbersack2005"/> and <xref target="CPNI-TCP"/>) in a number of operating systems for selecting IP fragment IDs, TCP ephemeral ports, etc.:</t>
+
+
+    <t>
+    <figure>
+    <artwork>
+    /* Initialization code */
+
+    next_id = min_id;
+    id_inc= 1;
+
+
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    retry = id_range;
+
+    do {
+        if (next_id == max_id) {
+            next_id = min_id;
+        }
+        else {
+            next_id = next_id + id_inc;
+        }
+
+        if (suitable_id(next_id)) {
+            return next_id;
+        }
+
+        retry--;
+
+    } while (retry > 0);
+
+    return ERROR;
+    </artwork>
+    </figure>
+    </t>
+
+<t>
+<list style="hanging">
+<t hangText="NOTE:">
+<vspace blankLines="0"/>
+suitable_id() is a function that checks whether the resulting identifier is acceptable (e.g., whether it's in use, etc.).
+</t>
+</list>
+</t>
+
+<t>For obvious reasons, this algorithm results in predictable sequences. Since a global counter is used to generate the transient numeric identifiers ("next_id" in the example above), an entity that learns one numeric identifier can infer past numeric identifiers and predict future values to be generated by the same algorithm. Since the value employed for the increments is known (such as "1" in this case), an attacker can sample two values, and learn the number of identifiers that have been were generated in-between the two sampled values. Furthermore, if the counter is initialized e.g. when the system its bootstrapped to some known value, the algorithm will leak additional information, such as the number of transmitted fragmented datagrams in the case of an IP ID generator <xref target="Sanfilippo1998a"/>, or the system uptime in the case of TCP timestamps <xref target="TCPT-uptime"/>.
+</t>
+
+</section>
+
+<section title="Random-Increments Algorithm" anchor="random-increments">
+<t>This algorithm offers a middle ground between the algorithms that
+  generate randomized transient numeric identifiers (such as those described in <xref target="simple-randomization"/> and  <xref target="simple-randomization2"/>), and those that generate identifiers with a predictable monotonically-increasing function (see <xref target="trad_selection"/>). 
+</t>
+    <t>
+    <figure>
+    <artwork>
+    /* Initialization code */
+
+    next_id = random();        /* Initialization value */
+    id_rinc = 500;             /* Determines the trade-off */
+
+                            
+    /* Transient Numeric ID selection function */
+
+    id_range = max_id - min_id + 1;
+    retry = id_range;
+
+
+    do {
+        /* Random increment */
+        id_inc = (random() % id_rinc) + 1;
+        
+        if ( (max_id - next_id) >= id_inc){
+            next_id = next_id + id_inc;
+        }
+        else {
+            next_id = min_id + id_inc - (max_id - next_id);
+        }
+
+        if (suitable_id(next_id)) {
+           return next_id;
+        }
+
+        retry = retry - id_inc;
+        
+    } while (retry > 0);
+
+    return ERROR;
+
+    </artwork>
+    </figure>
+    </t>
+
+
+
+<t>
+This algorithm aims at producing a global monotonically-increasing sequence of transient numeric identifiers, while avoiding the
+use of fixed increments, which would lead to trivially predictable sequences.  The value "id_inc" allows for direct control of the trade-off between unpredictability and identifier reuse frequency. The smaller the value of &quot;id_inc&quot;, the more similar this algorithm is to a predicable, global linear ID generation algorithm (as the one in <xref target="trad_selection"/>). The larger the value of "id_inc", the more similar this algorithm is to the algorithm described in <xref target="simple-randomization"/> of this document.</t>
+
+<t>
+When the identifiers wrap, there is a risk of collisions of transient numeric identifiers (i.e., identifier reuse). Therefore, "id_inc" should be selected according to the following criteria:
+</t>
+
+    <t>
+    <list style="symbols">
+<t>It should maximize the wrapping time of the identifier space.</t>
+<t>It should minimize identifier reuse frequency.</t>
+<t>It should maximize unpredictability.</t>
+    </list>
+    </t>
+
+<t>
+Clearly, these are competing goals, and the decision of which value of "id_inc" to use is a trade-off. Therefore, the value of "id_inc" is at times a configurable parameter so that system administrators can make the trade-off for themselves. We note that the alternative algorithms discussed throughout this document offer better interoperability, security and privacy properties than this algorithm, and hence implementation of this algorithm is discouraged.
+</t>
+</section>
+
+<section title="Re-using Identifiers Across Different Contexts" anchor="reuse-across-context">
+
+<t>Employing the same identifier across contexts in which stability is not required (i.e. overloading the semantics of transient numeric identifier) usually has negative security and privacy implications.</t>
+
+<t>For example, in order to generate transient numeric identifiers of Category #2 or Category #3, an implementation or specification might be tempted to employ a source for the numeric identifiers which is known to provide unique values, but that may also be predictable or leak information related to the entity generating the identifier. This technique has been employed in the past for e.g. generating IPv6 IIDs by re-using the MAC address of the underlying network interface. However, as noted in <xref target="RFC7721"/> and <xref target="RFC7707"/>, embedding link-layer addresses in IPv6 IIDs not only results in predictable values, but also leaks information about the manufacturer of the underlying network interface card, allows for network activity correlation, and makes address-based scanning attacks feasible.
+</t>
+
+</section>
+</section>
+
+
+  </back>
+</rfc>
+
